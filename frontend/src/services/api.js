@@ -1,4 +1,4 @@
-const API_URL = "http://localhost:8080/api";
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8080/api";
 
 export async function signup(data) {
   const response = await fetch(`${API_URL}/auth/signup`, {
@@ -13,8 +13,34 @@ export async function signup(data) {
   });
 
   if (!response.ok) {
-    throw new Error("Signup failed");
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err.message || "Signup failed");
   }
 
   return response.json();
+}
+
+export async function login(credentials) {
+  const response = await fetch(`${API_URL}/auth/login`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      email: credentials.email,
+      password: credentials.password,
+    }),
+  });
+
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err.message || "Login failed");
+  }
+
+  return response.json();
+}
+
+export function authFetch(token) {
+  return function (path, opts = {}) {
+    const headers = { ...(opts.headers || {}), Authorization: `Bearer ${token}` };
+    return fetch(`${API_URL}${path}`, { ...opts, headers });
+  };
 }

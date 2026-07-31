@@ -104,24 +104,92 @@ jobnest-job-aptitude-portal/
 - Node.js 18+ (for frontend)
 - Docker (for MySQL)
 
-### Backend
+### Run everything with Docker Compose
 
 ```bash
-docker compose up -d
+docker compose up --build
+```
+
+This starts:
+- MySQL on `http://localhost:3306`
+- Backend on `http://localhost:8080`
+- Frontend on `http://localhost:3000`
+
+When the backend sources change, Docker will only re-download Maven dependencies if `pom.xml` or `.mvn` change. The optimized backend Dockerfile caches Maven dependency resolution in an earlier layer, so repeated `docker compose up --build` runs are much faster when only application code changes.
+
+### Run backend locally without Docker
+
+```bash
 ./mvnw spring-boot:run
 ```
 
-Backend runs at `http://localhost:8080`
-
-### Frontend
+### Run frontend locally without Docker (development)
 
 ```bash
 cd frontend
 npm install
-npm start
+npm run dev
 ```
 
-Frontend runs at `http://localhost:3000`
+### Build frontend for production
+
+```bash
+cd frontend
+npm install
+npm run build
+# serve the dist folder with a static server for verification (optional)
+# npx serve dist
+```
+
+### Environment & frontend configuration
+
+- The frontend uses `VITE_API_URL` to locate the backend API. By default it falls back to:
+
+```
+http://localhost:8080/api
+```
+
+- When running with Docker Compose the compose file is preconfigured so the frontend connects to the backend at `http://localhost:8080/api`.
+
+### Dev libraries added
+
+The frontend currently includes a few libraries for UI and visualization used in the new landing and dashboard:
+
+- framer-motion — animations and micro-interactions
+- recharts — charts for dashboard widgets
+- clsx — small helper for conditional classnames
+
+Install them in the frontend folder with:
+
+```bash
+cd frontend
+npm install framer-motion recharts clsx
+```
+
+### Important routes (frontend)
+
+- `/` — Landing page (home)
+- `/signup` — Signup page
+- `/login` — Login page
+- `/jobs` — Jobs listing
+- `/dashboard` — Candidate or Recruiter dashboard (requires authentication)
+- `/dashboard/profile` — Candidate profile summary
+- `/dashboard/jobs` — Candidate jobs listing
+- `/dashboard/post-job` — Recruiter job creation
+- `/dashboard/applicants` — Recruiter applicants view
+
+### Notes for developers
+
+- The landing page includes a Signup modal which calls `POST /api/auth/signup` through the AuthContext. On success the JWT and user object are saved to `localStorage` (keys: `jn_token`, `jn_user`) and the app navigates to `/dashboard`.
+- The backend CORS policy has been relaxed for local development to allow `http://localhost:*` and `http://127.0.0.1:*`. If you tighten this for production, update `src/main/java/.../config/SecurityConfig.java` accordingly.
+- To run the entire stack locally (recommended):
+
+```bash
+docker compose up --build
+```
+
+This starts MySQL, the backend, and the frontend (dev server) mapped to ports 3306, 8080 and 3000 respectively.
+
 
 ## Development Plan
 

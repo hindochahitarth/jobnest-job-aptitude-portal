@@ -1,7 +1,8 @@
-import { useState } from "react";
-import { signup } from "../../services/api";
+import { useContext, useState } from "react";
+import { AuthContext } from "../../context/AuthContext";
 
 export default function Register() {
+  const { signup } = useContext(AuthContext);
   const [form, setForm] = useState({
     name: "",
     email: "",
@@ -21,9 +22,12 @@ export default function Register() {
     setIsError(false);
     try {
       await signup(form);
-      setMessage("Account created. You can log in now.");
-    } catch {
-      setMessage("Signup failed. Try again.");
+      // after signup the user is already authenticated by the provider
+      // navigate to dashboard
+      window.history.pushState({}, "", "/dashboard");
+      window.dispatchEvent(new PopStateEvent("popstate"));
+    } catch (err) {
+      setMessage(err.message || "Signup failed. Try again.");
       setIsError(true);
     }
   }
@@ -107,7 +111,7 @@ export default function Register() {
             )}
 
             <p className="auth-footer">
-              Already have an account? <a href="#">Sign in</a>
+              Already have an account? <a href="/login" onClick={(e) => { e.preventDefault(); window.history.pushState({}, "", "/login"); window.dispatchEvent(new PopStateEvent("popstate")); }}>Sign in</a>
             </p>
           </form>
         </section>
