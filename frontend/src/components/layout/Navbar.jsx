@@ -1,20 +1,17 @@
-import React, { useState } from "react";
-import { motion } from "framer-motion";
+import React from "react";
 
 const links = [
   { label: "Home", href: "/" },
-  { label: "Features", href: "/#features" },
-  { label: "Jobs", href: "/jobs" },
+  { label: "Explore Jobs", href: "/jobs" },
+  { label: "Aptitude Tests", href: "/#features" },
+  { label: "For Employers", href: "/#how-it-works" },
   { label: "About", href: "/#about" },
 ];
 
 export default function Navbar() {
-  const [open, setOpen] = useState(false);
-
   function navigate(href) {
     window.history.pushState({}, "", href);
     window.dispatchEvent(new PopStateEvent("popstate"));
-    setOpen(false);
 
     const hashIndex = href.indexOf("#");
     if (hashIndex > -1) {
@@ -32,43 +29,34 @@ export default function Navbar() {
   }
 
   return (
-    <nav className="jn-navbar">
-      <div className="container nav-inner">
-        <a href="/" className="logo" onClick={(e) => handleLinkClick(e, "/")}>JobNest</a>
+    <header className="jn-navbar">
+      <div className="nav-inner">
+        <a href="/" className="logo-brand" onClick={(e) => handleLinkClick(e, "/")}>
+          <div className="logo-icon">JN</div>
+          <span>JobNest</span>
+        </a>
 
-        <button
-          className="nav-toggle"
-          onClick={() => setOpen((s) => !s)}
-          aria-label="Toggle menu"
-          type="button"
-        >
-          <span className="hamburger" />
-        </button>
-
-        <div className={`nav-links ${open ? "open" : ""}`}>
+        <nav className="nav-links">
           {links.map((link) => (
             <a
-              key={link.href}
+              key={link.label}
               href={link.href}
               onClick={(e) => handleLinkClick(e, link.href)}
             >
               {link.label}
             </a>
           ))}
-        </div>
+        </nav>
 
-        <div className="nav-cta">
-          <button className="btn btn-ghost" type="button" onClick={(e) => handleLinkClick(e, "/login")}>Login</button>
-          <button className="btn btn-primary" type="button" onClick={(e) => handleLinkClick(e, "/signup")}>Get Started</button>
+        <div className="nav-actions">
+          <button className="btn btn-ghost" type="button" onClick={(e) => handleLinkClick(e, "/login")}>
+            Sign In
+          </button>
+          <button className="btn btn-primary" type="button" onClick={(e) => handleLinkClick(e, "/signup")}>
+            Register Free
+          </button>
         </div>
       </div>
-
-      <motion.div
-        initial={{ height: 0 }}
-        animate={{ height: open ? "auto" : 0 }}
-        transition={{ duration: 0.22 }}
-        className="mobile-nav"
-      />
-    </nav>
+    </header>
   );
 }

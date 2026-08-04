@@ -1,37 +1,46 @@
 import React from "react";
-import { motion } from "framer-motion";
 
 const features = [
-  { id: 1, title: "Resume Parsing", desc: "Extract sections & skills from your resume" },
-  { id: 2, title: "JD Matching", desc: "AI-powered job-description to resume matching" },
-  { id: 3, title: "Resume Builder", desc: "Templates and smart suggestions" },
-  { id: 4, title: "Aptitude Tests", desc: "Timed, section-wise practice tests" },
-  { id: 5, title: "AI Interview Prep", desc: "Mock Q&A, feedback & suggestions" },
+  {
+    icon: "🧠",
+    title: "AI Resume & Skill Matcher",
+    desc: "Our smart parsing engine analyzes your resume against recruiter job descriptions, giving instant match percentages and skill gap highlights.",
+  },
+  {
+    icon: "⚡",
+    title: "Verified Aptitude Tests",
+    desc: "Prove your analytical, quantitative, and verbal capabilities with industry-aligned aptitude assessments that recruiters trust.",
+  },
+  {
+    icon: "👔",
+    title: "Direct Recruiter Access",
+    desc: "Get shortlisted faster. Recruiters search our candidate database filtered directly by verified aptitude scores and resume matches.",
+  },
+  {
+    icon: "📊",
+    title: "Skill Scorecards & Reports",
+    desc: "Comprehensive performance scorecards detailing your strengths, percentile rank, and practice mock tests for interview readiness.",
+  },
 ];
-
-const container = { hidden: {}, show: { transition: { staggerChildren: 0.06 } } };
-const item = { hidden: { opacity: 0, y: 8 }, show: { opacity: 1, y: 0 } };
 
 export default function FeaturesGrid() {
   return (
-    <section className="landing-features" id="features">
-      <div className="section-inner">
-        <motion.h2 initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.04 }}>
-          Powerful tools to help you get hired
-        </motion.h2>
-        <motion.p className="muted" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.08 }}>
-          From parsing to interview prep — everything in one place.
-        </motion.p>
+    <section className="landing-section" id="features">
+      <div className="section-container">
+        <div className="section-header-center">
+          <h2>Why Top Talent & Recruiters Choose JobNest</h2>
+          <p>Everything candidates and hiring teams need to connect based on real, verified skill metrics.</p>
+        </div>
 
-        <motion.div className="features-grid" variants={container} initial="hidden" animate="show">
-          {features.map((f) => (
-            <motion.article key={f.id} className="feature-card" variants={item}>
-              <div className="feature-icon">{"🟣"}</div>
-              <h4>{f.title}</h4>
-              <p className="muted">{f.desc}</p>
-            </motion.article>
+        <div className="features-grid-v2">
+          {features.map((item, idx) => (
+            <div key={idx} className="feature-card-v2">
+              <div className="feature-icon-v2">{item.icon}</div>
+              <h3>{item.title}</h3>
+              <p>{item.desc}</p>
+            </div>
           ))}
-        </motion.div>
+        </div>
       </div>
     </section>
   );

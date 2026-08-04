@@ -11,25 +11,32 @@ export default function Sidebar({ collapsed, onToggle, items = [] }) {
 
   return (
     <aside className={`jn-sidebar ${collapsed ? "collapsed" : ""}`}>
-      <div className="sidebar-top">
+      <div className="sidebar-brand">
+        {!collapsed && (
+          <div className="sidebar-logo">
+            <span>JobNest</span>
+            <span className="badge">PRO</span>
+          </div>
+        )}
         <button className="collapse-btn" onClick={onToggle} aria-label="Toggle sidebar">
-          {collapsed ? "☰" : "«"}
+          {collapsed ? "➡️" : "⬅️"}
         </button>
       </div>
 
       <nav className="sidebar-nav">
         {items.map((item) => {
-          const isActive = currentPath === item.href;
+          const isActive = currentPath === item.href || (currentPath === "/dashboard" && item.href === "/dashboard");
           return (
             <a
               key={item.key}
               href={item.href}
               onClick={(e) => navigate(e, item.href)}
               className={`sidebar-item ${isActive ? "active" : ""}`}
+              title={item.label}
             >
               <span className="icon">{item.icon}</span>
               {!collapsed && <span className="label">{item.label}</span>}
-              {item.badge && <span className="badge">{item.badge}</span>}
+              {!collapsed && item.badge && <span className="badge-count">{item.badge}</span>}
             </a>
           );
         })}

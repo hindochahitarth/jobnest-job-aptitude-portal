@@ -38,6 +38,47 @@ export async function login(credentials) {
   return response.json();
 }
 
+export async function uploadResume(file, token) {
+  const formData = new FormData();
+  formData.append("file", file);
+
+  const headers = {};
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
+
+  const response = await fetch(`${API_URL}/candidate/resume/upload`, {
+    method: "POST",
+    headers,
+    body: formData,
+  });
+
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err.message || "Resume upload failed");
+  }
+
+  return response.json();
+}
+
+export async function getLatestResume(token) {
+  const headers = {};
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
+
+  const response = await fetch(`${API_URL}/candidate/resume/latest`, {
+    method: "GET",
+    headers,
+  });
+
+  if (!response.ok) {
+    return null;
+  }
+
+  return response.json();
+}
+
 export function authFetch(token) {
   return function (path, opts = {}) {
     const headers = { ...(opts.headers || {}), Authorization: `Bearer ${token}` };

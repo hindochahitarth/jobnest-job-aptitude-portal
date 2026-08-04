@@ -1,36 +1,46 @@
 import React from "react";
-import { motion } from "framer-motion";
 
 const steps = [
-  "Signup",
-  "Upload Resume",
-  "Get Match Score",
-  "Take Test",
-  "Get Results",
+  {
+    num: "1",
+    title: "Create Profile",
+    desc: "Build your professional profile and upload your resume for instant AI analysis.",
+  },
+  {
+    num: "2",
+    title: "Take Aptitude Assessment",
+    desc: "Complete standardized aptitude and skill assessments to earn verified score badges.",
+  },
+  {
+    num: "3",
+    title: "Get Matched & Shortlisted",
+    desc: "Recruiters discover your verified profile and send direct interview invitations.",
+  },
+  {
+    num: "4",
+    title: "Land Your Role",
+    desc: "Prepare with AI mock interview tools and secure your dream job with top companies.",
+  },
 ];
-
-const container = { hidden: {}, show: { transition: { staggerChildren: 0.06 } } };
-const stepVariant = { hidden: { opacity: 0, y: 8 }, show: { opacity: 1, y: 0 } };
 
 export default function HowItWorks() {
   return (
-    <section className="landing-steps">
-      <div className="section-inner">
-        <motion.h2 initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.04 }}>
-          How it works
-        </motion.h2>
-        <motion.p className="muted" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.08 }}>
-          A simple flow to get you interview-ready.
-        </motion.p>
+    <section className="landing-section alt-bg" id="how-it-works">
+      <div className="section-container">
+        <div className="section-header-center">
+          <h2>How JobNest Works</h2>
+          <p>Four simple steps from building your profile to landing top offers.</p>
+        </div>
 
-        <motion.div className="steps-row" variants={container} initial="hidden" animate="show">
-          {steps.map((s, i) => (
-            <motion.div key={s} className="step" variants={stepVariant}>
-              <div className="step-index">{i + 1}</div>
-              <div className="step-title">{s}</div>
-            </motion.div>
+        <div className="how-it-works-grid">
+          {steps.map((step) => (
+            <div key={step.num} className="step-card">
+              <div className="step-number">{step.num}</div>
+              <h4>{step.title}</h4>
+              <p>{step.desc}</p>
+            </div>
           ))}
-        </motion.div>
+        </div>
       </div>
     </section>
   );

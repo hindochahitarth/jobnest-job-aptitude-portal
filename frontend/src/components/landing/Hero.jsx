@@ -1,115 +1,109 @@
-import React from "react";
-import { motion } from "framer-motion";
-
-function navigateTo(path) {
-  window.history.pushState({}, "", path);
-  window.dispatchEvent(new PopStateEvent("popstate"));
-}
+import React, { useState } from "react";
 
 export default function Hero() {
+  const [role, setRole] = useState("");
+  const [location, setLocation] = useState("");
+  const [exp, setExp] = useState("0-2");
+
+  function handleSearch(e) {
+    e.preventDefault();
+    window.history.pushState({}, "", `/jobs?q=${encodeURIComponent(role)}&loc=${encodeURIComponent(location)}`);
+    window.dispatchEvent(new PopStateEvent("popstate"));
+  }
+
+  function handleTrendingClick(tag) {
+    setRole(tag);
+    window.history.pushState({}, "", `/jobs?q=${encodeURIComponent(tag)}`);
+    window.dispatchEvent(new PopStateEvent("popstate"));
+  }
+
   return (
     <section className="landing-hero">
-      <div className="hero-background" aria-hidden="true" />
-      <div className="section-inner hero-inner">
-        <div className="hero-copy">
-          <motion.div
-            initial={{ opacity: 0, y: 18 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.08, duration: 0.56 }}
-            className="hero-badge"
-          >
-            <span>Built for Gen Z job hunters and early-career talent</span>
-          </motion.div>
+      <div className="hero-container">
+        <div className="hero-header-center">
+          <div className="hero-badge-pill">
+            <span>🎯 India's #1 Skill & Aptitude-Verified Job Portal</span>
+          </div>
 
-          <motion.h1
-            initial={{ opacity: 0, y: 18 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.12, duration: 0.6 }}
-          >
-            Find the right job. Prove your skills. Land your next role with confidence.
-          </motion.h1>
+          <h1 className="hero-title">
+            Find Your Dream Job with <span>Verified Aptitude Scores</span>
+          </h1>
 
-          <motion.p
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.18, duration: 0.55 }}
-          >
-            JobNest brings AI resume matching, aptitude tests, and career-ready feedback together in one polished candidate experience.
-          </motion.p>
-
-          <motion.div
-            className="hero-ctas"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.22, duration: 0.4 }}
-          >
-            <button className="btn btn-primary" type="button" onClick={() => navigateTo("/signup")}>Get Started</button>
-            <button className="btn btn-ghost" type="button" onClick={() => navigateTo("/jobs")}>Explore Jobs</button>
-          </motion.div>
-
-          <motion.div
-            className="hero-stat-grid"
-            initial={{ opacity: 0, y: 18 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.28, duration: 0.45 }}
-          >
-            <div className="hero-stat">
-              <strong>98%</strong>
-              <span>Resume match confidence boosted</span>
-            </div>
-            <div className="hero-stat">
-              <strong>25k+</strong>
-              <span>Students who practiced aptitude tests</span>
-            </div>
-            <div className="hero-stat">
-              <strong>4.9/5</strong>
-              <span>Candidate satisfaction rating</span>
-            </div>
-          </motion.div>
+          <p className="hero-subtitle">
+            JobNest matches early talent with top employers using AI resume analysis, verified aptitude assessments, and direct recruiter recommendations.
+          </p>
         </div>
 
-        <motion.div
-          className="hero-visual"
-          initial={{ opacity: 0, scale: 0.96 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: 0.18, duration: 0.62 }}
-        >
-          <div className="illustration" aria-hidden>
-            <svg viewBox="0 0 900 600" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
-              <defs>
-                <linearGradient id="lg1" x1="0" x2="1">
-                  <stop offset="0%" stopColor="#7c3aed" />
-                  <stop offset="100%" stopColor="#2563eb" />
-                </linearGradient>
-                <linearGradient id="lg2" x1="0" x2="1">
-                  <stop offset="0%" stopColor="#22c1c3" />
-                  <stop offset="100%" stopColor="#7c3aed" />
-                </linearGradient>
-                <filter id="f1" x="-20%" y="-20%" width="140%" height="140%">
-                  <feGaussianBlur stdDeviation="22" result="g" />
-                </filter>
-              </defs>
-
-              <rect x="0" y="0" width="900" height="600" rx="34" fill="url(#lg1)" opacity="0.08" />
-              <circle cx="720" cy="120" r="56" fill="#fff" opacity="0.12" />
-              <circle cx="180" cy="460" r="52" fill="#fff" opacity="0.08" />
-              <rect x="60" y="80" width="260" height="146" rx="24" fill="#fff" opacity="0.08" />
-              <rect x="110" y="110" width="160" height="18" rx="9" fill="#fff" opacity="0.18" />
-              <rect x="110" y="150" width="110" height="12" rx="6" fill="#fff" opacity="0.14" />
-              <rect x="420" y="32" width="384" height="204" rx="26" fill="#fff" opacity="0.05" />
-              <rect x="440" y="58" width="130" height="12" rx="6" fill="#fff" opacity="0.18" />
-              <rect x="440" y="92" width="240" height="14" rx="7" fill="#fff" opacity="0.14" />
-              <rect x="440" y="130" width="120" height="12" rx="6" fill="#fff" opacity="0.14" />
-              <rect x="440" y="168" width="260" height="12" rx="6" fill="#fff" opacity="0.12" />
-              <rect x="520" y="250" width="280" height="160" rx="20" fill="#fff" opacity="0.06" />
-              <rect x="540" y="282" width="110" height="14" rx="7" fill="#fff" opacity="0.18" />
-              <rect x="540" y="314" width="180" height="12" rx="6" fill="#fff" opacity="0.12" />
-              <circle cx="790" cy="380" r="18" fill="#fff" opacity="0.15" />
-              <circle cx="750" cy="430" r="34" fill="#fff" opacity="0.08" />
-              <ellipse cx="660" cy="520" rx="170" ry="80" fill="url(#lg2)" opacity="0.08" filter="url(#f1)" />
-            </svg>
+        {/* Naukri / LinkedIn Style Search Widget */}
+        <form className="hero-search-widget" onSubmit={handleSearch}>
+          <div className="search-field">
+            <span className="field-icon">🔍</span>
+            <input
+              type="text"
+              placeholder="Search by job title, skill, or company (e.g. React, Data Analyst)"
+              value={role}
+              onChange={(e) => setRole(e.target.value)}
+            />
           </div>
-        </motion.div>
+
+          <div className="search-field">
+            <span className="field-icon">📍</span>
+            <input
+              type="text"
+              placeholder="Location (e.g. Remote, Bengaluru)"
+              value={location}
+              onChange={(e) => setLocation(e.target.value)}
+            />
+          </div>
+
+          <div className="search-field">
+            <span className="field-icon">💼</span>
+            <select value={exp} onChange={(e) => setExp(e.target.value)}>
+              <option value="0-1">Fresher (0-1 yrs)</option>
+              <option value="0-2">Junior (0-2 yrs)</option>
+              <option value="2-5">Mid Level (2-5 yrs)</option>
+              <option value="5+">Senior (5+ yrs)</option>
+            </select>
+          </div>
+
+          <button type="submit" className="btn btn-primary btn-lg">
+            Search Jobs
+          </button>
+        </form>
+
+        <div className="trending-searches">
+          <span>Trending Searches:</span>
+          {["Full Stack Developer", "Data Analyst", "Aptitude Practice", "Frontend SDE", "Remote Jobs"].map((tag) => (
+            <button
+              key={tag}
+              type="button"
+              className="trending-pill"
+              onClick={() => handleTrendingClick(tag)}
+            >
+              {tag}
+            </button>
+          ))}
+        </div>
+
+        {/* Stat Counter Banner */}
+        <div className="hero-stats-banner">
+          <div className="stat-item">
+            <div className="number">250K+</div>
+            <div className="label">Active Openings</div>
+          </div>
+          <div className="stat-item">
+            <div className="number">10K+</div>
+            <div className="label">Verified Employers</div>
+          </div>
+          <div className="stat-item">
+            <div className="number">96%</div>
+            <div className="label">Aptitude Match Rate</div>
+          </div>
+          <div className="stat-item">
+            <div className="number">1M+</div>
+            <div className="label">Assessments Taken</div>
+          </div>
+        </div>
       </div>
     </section>
   );

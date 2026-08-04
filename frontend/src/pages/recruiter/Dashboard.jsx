@@ -9,12 +9,12 @@ import Reports from "./Reports";
 import AITools from "./AITools";
 
 const sidebarItems = [
-  { key: "dash", href: "/dashboard", label: "Dashboard", icon: "🏠" },
-  { key: "post", href: "/dashboard/post-job", label: "Post Job", icon: "✍️" },
-  { key: "applicants", href: "/dashboard/applicants", label: "Applicants", icon: "🧾" },
-  { key: "shortlisted", href: "/dashboard/shortlisted", label: "Shortlisted", icon: "⭐" },
-  { key: "reports", href: "/dashboard/reports", label: "Reports", icon: "📈" },
-  { key: "ai", href: "/dashboard/ai-tools", label: "AI Tools", icon: "🤖" },
+  { key: "dash", href: "/dashboard", label: "Hiring Overview", icon: "🏠" },
+  { key: "post", href: "/dashboard/post-job", label: "Post New Job", icon: "✍️" },
+  { key: "applicants", href: "/dashboard/applicants", label: "Applicants ATS", icon: "🧾", badge: "24 New" },
+  { key: "shortlisted", href: "/dashboard/shortlisted", label: "Shortlisted Talent", icon: "⭐" },
+  { key: "reports", href: "/dashboard/reports", label: "Analytics & Reports", icon: "📈" },
+  { key: "ai", href: "/dashboard/ai-tools", label: "AI Screening Suite", icon: "🤖" },
 ];
 
 function resolveSection(path) {
@@ -35,12 +35,14 @@ function resolveSection(path) {
   }
 }
 
-export default function Dashboard() {
+export default function RecruiterDashboard() {
   const { user } = useContext(AuthContext);
   const currentPath = window.location.pathname.replace("/dashboard", "") || "/";
-  const title = user ? `Recruiter Dashboard` : "Recruiter Dashboard";
+  const title = user ? `Recruiter Hub — ${user.name || "Hiring Manager"}` : "Recruiter Portal";
 
   return (
-    <DashboardLayout items={sidebarItems} title={title} subtitle="Manage hiring and candidate flow">{resolveSection(currentPath)}</DashboardLayout>
+    <DashboardLayout items={sidebarItems} title={title} subtitle="Recruiter Portal">
+      {resolveSection(currentPath)}
+    </DashboardLayout>
   );
 }

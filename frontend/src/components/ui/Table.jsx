@@ -1,7 +1,7 @@
 export default function Table({ columns = [], data = [] }) {
   return (
-    <div className="table-card card">
-      <table className="data-table">
+    <div className="table-responsive">
+      <table className="jn-table">
         <thead>
           <tr>
             {columns.map((column) => (
