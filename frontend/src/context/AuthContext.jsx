@@ -26,8 +26,7 @@ export function AuthProvider({ children }) {
 
   async function signup(data) {
     const res = await api.signup(data);
-    setToken(res.token);
-    setUser(res.user);
+    // Do NOT auto-login after signup — user must log in explicitly
     return res;
   }
 

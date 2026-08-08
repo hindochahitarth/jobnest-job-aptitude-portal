@@ -29,8 +29,13 @@ export default function Signup() {
 
     try {
       await signup(form);
-      window.history.pushState({}, "", "/dashboard");
-      window.dispatchEvent(new PopStateEvent("popstate"));
+      setMessage("Account created successfully! Please sign in.");
+      setIsError(false);
+      // Redirect to login page after a brief delay so user sees the success message
+      setTimeout(() => {
+        window.history.pushState({}, "", "/login");
+        window.dispatchEvent(new PopStateEvent("popstate"));
+      }, 1500);
     } catch (err) {
       setMessage(err.message || "Signup failed. Please try again.");
       setIsError(true);
