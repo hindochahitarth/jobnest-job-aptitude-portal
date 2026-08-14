@@ -7,6 +7,11 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
 
+  function navigateTo(path) {
+    window.history.pushState({}, "", path);
+    window.dispatchEvent(new PopStateEvent("popstate"));
+  }
+
   function handleChange(e) {
     setForm({ ...form, [e.target.name]: e.target.value });
   }
@@ -33,10 +38,15 @@ export default function Login() {
         {/* Brand Side Panel */}
         <aside className="auth-brand">
           <div className="auth-brand-inner">
-            <div className="auth-logo-badge">
+            <a
+              href="/"
+              className="auth-logo-badge"
+              onClick={(e) => { e.preventDefault(); navigateTo("/"); }}
+              style={{ textDecoration: "none", cursor: "pointer" }}
+            >
               <div className="icon-box">JN</div>
               <span>JobNest</span>
-            </div>
+            </a>
             <h2>Welcome Back</h2>
             <p>
               Sign in to manage your aptitude assessments, track job applications, and access recruiter shortlists.
@@ -53,6 +63,13 @@ export default function Login() {
         <section className="auth-form-section">
           <form className="auth-card" onSubmit={handleSubmit}>
             <div className="auth-card-header">
+              <a
+                href="/"
+                onClick={(e) => { e.preventDefault(); navigateTo("/"); }}
+                style={{ fontSize: 13, color: "var(--text-muted)", textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 4, marginBottom: 12 }}
+              >
+                ← Back to Home
+              </a>
               <h1>Sign In</h1>
               <p>Access your JobNest account</p>
             </div>

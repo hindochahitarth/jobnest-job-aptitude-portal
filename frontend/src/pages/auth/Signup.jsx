@@ -13,6 +13,11 @@ export default function Signup() {
   const [message, setMessage] = useState("");
   const [isError, setIsError] = useState(false);
 
+  function navigateTo(path) {
+    window.history.pushState({}, "", path);
+    window.dispatchEvent(new PopStateEvent("popstate"));
+  }
+
   function handleChange(e) {
     setForm({ ...form, [e.target.name]: e.target.value });
   }
@@ -50,10 +55,15 @@ export default function Signup() {
         {/* Brand Side Panel */}
         <aside className="auth-brand">
           <div className="auth-brand-inner">
-            <div className="auth-logo-badge">
+            <a
+              href="/"
+              className="auth-logo-badge"
+              onClick={(e) => { e.preventDefault(); navigateTo("/"); }}
+              style={{ textDecoration: "none", cursor: "pointer" }}
+            >
               <div className="icon-box">JN</div>
               <span>JobNest</span>
-            </div>
+            </a>
             <h2>Accelerate Your Career with Verified Aptitude</h2>
             <p>
               Join India's leading skill-verified job portal connecting top talent with employers.
@@ -70,6 +80,13 @@ export default function Signup() {
         <section className="auth-form-section">
           <form className="auth-card" onSubmit={handleSubmit}>
             <div className="auth-card-header">
+              <a
+                href="/"
+                onClick={(e) => { e.preventDefault(); navigateTo("/"); }}
+                style={{ fontSize: 13, color: "var(--text-muted)", textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 4, marginBottom: 12 }}
+              >
+                ← Back to Home
+              </a>
               <h1>Get Started</h1>
               <p>Create your free JobNest account</p>
             </div>
