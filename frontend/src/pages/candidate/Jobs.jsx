@@ -1,7 +1,10 @@
-import React, { useState } from "react";
-import DashboardLayout from "../../components/layout/DashboardLayout";
+import React, { useContext, useState } from "react";
+import { AuthContext } from "../../context/AuthContext";
+import Navbar from "../../components/layout/Navbar";
+import Footer from "../../components/landing/Footer";
 import JobCard from "../../components/job/JobCard";
 import Card from "../../components/ui/Card";
+import "../../assets/styles/landing.css";
 
 const mockJobs = [
   { id: 1, title: "Frontend React Engineer", company: "Acme Corp", location: "Remote / India", match: 92, salary: "₹8 LPA - ₹12 LPA", snippet: "Build web applications with React, Redux, and modern CSS modules.", skills: "React, JavaScript, CSS" },
@@ -11,6 +14,8 @@ const mockJobs = [
 ];
 
 export default function JobsPage({ embed = false }) {
+  const { user } = useContext(AuthContext);
+  const isLoggedIn = !!user;
   const [searchTerm, setSearchTerm] = useState("");
   const [location, setLocation] = useState("");
   const [selectedJob, setSelectedJob] = useState(mockJobs[0]);
@@ -22,6 +27,11 @@ export default function JobsPage({ embed = false }) {
   );
 
   function handleApply(job) {
+    if (!isLoggedIn) {
+      window.history.pushState({}, "", "/login");
+      window.dispatchEvent(new PopStateEvent("popstate"));
+      return;
+    }
     alert(`Successfully applied to ${job.title} at ${job.company}!`);
   }
 
@@ -68,7 +78,7 @@ export default function JobsPage({ embed = false }) {
                 borderRadius: "var(--radius-md)"
               }}
             >
-              <JobCard job={job} onApply={handleApply} />
+              <JobCard job={isLoggedIn ? job : { ...job, match: null }} onApply={handleApply} showApply={isLoggedIn} />
             </div>
           ))}
         </div>
@@ -79,9 +89,11 @@ export default function JobsPage({ embed = false }) {
             <Card>
               <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
                 <div>
-                  <span className="badge-v2 success" style={{ marginBottom: 8 }}>
-                    🎯 {selectedJob.match}% Match Confidence
-                  </span>
+                  {isLoggedIn && (
+                    <span className="badge-v2 success" style={{ marginBottom: 8 }}>
+                      🎯 {selectedJob.match}% Match Confidence
+                    </span>
+                  )}
                   <h2 style={{ fontSize: 22, fontWeight: 800, color: "var(--text-main)", marginTop: 4 }}>
                     {selectedJob.title}
                   </h2>
@@ -117,7 +129,7 @@ export default function JobsPage({ embed = false }) {
                   style={{ width: "100%", marginTop: 10 }}
                   onClick={() => handleApply(selectedJob)}
                 >
-                  Apply Now with JobNest Profile
+                  {isLoggedIn ? "Apply Now with JobNest Profile" : "Login to Apply"}
                 </button>
               </div>
             </Card>
@@ -127,5 +139,19 @@ export default function JobsPage({ embed = false }) {
     </div>
   );
 
-  return embed ? content : <DashboardLayout title="Recommended Jobs">{content}</DashboardLayout>;
+  if (embed) return content;
+
+  return (
+    <div className="landing-page">
+      <Navbar />
+      <main style={{ maxWidth: 1100, margin: "0 auto", padding: "100px 24px 40px" }}>
+        <div style={{ marginBottom: 24 }}>
+          <h1 style={{ fontSize: 28, fontWeight: 800, color: "var(--text-main)" }}>Explore Jobs</h1>
+          <p style={{ fontSize: 15, color: "var(--text-muted)", marginTop: 4 }}>Browse open positions from top employers on JobNest</p>
+        </div>
+        {content}
+      </main>
+      <Footer />
+    </div>
+  );
 }

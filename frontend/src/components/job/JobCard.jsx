@@ -1,6 +1,6 @@
 import React from "react";
 
-export default function JobCard({ job, onApply }) {
+export default function JobCard({ job, onApply, showApply = true }) {
   const companyInitial = (job.company || "C").charAt(0).toUpperCase();
 
   return (
@@ -43,7 +43,7 @@ export default function JobCard({ job, onApply }) {
           className="btn btn-primary btn-sm"
           onClick={() => onApply && onApply(job)}
         >
-          Easy Apply
+          {showApply ? "Easy Apply" : "Login to Apply"}
         </button>
       </div>
     </div>

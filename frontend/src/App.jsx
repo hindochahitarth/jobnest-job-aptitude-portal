@@ -8,6 +8,7 @@ import RecruiterDashboard from "./pages/recruiter/Dashboard";
 import JobsPage from "./pages/candidate/Jobs";
 
 function Router() {
+  const { user } = useContext(AuthContext);
   const [path, setPath] = useState(window.location.pathname);
   useEffect(() => {
     const onPop = () => setPath(window.location.pathname);
@@ -15,11 +16,21 @@ function Router() {
     return () => window.removeEventListener("popstate", onPop);
   }, []);
 
-  // simple route switch
-  if (path === "/login") return <Login />;
-  if (path === "/signup") return <Register />;
+  // Redirect helper
+  function redirectTo(target) {
+    window.history.pushState({}, "", target);
+    window.dispatchEvent(new PopStateEvent("popstate"));
+    return null;
+  }
+
+  // Guest-only routes: redirect logged-in users to dashboard
+  if (path === "/login") return user ? redirectTo("/dashboard") : <Login />;
+  if (path === "/signup") return user ? redirectTo("/dashboard") : <Register />;
+
+  // Protected routes: redirect guests to login
   if (path === "/jobs") return <JobsPage />;
   if (path.startsWith("/dashboard")) return <DashboardSwitcher />;
+
   // default to landing home
   return <Home />;
 }
