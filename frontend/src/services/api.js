@@ -154,3 +154,85 @@ export async function uploadProfileResume(file, token) {
   return response.json();
 }
 
+export async function getRecommendedJobs(token) {
+  const response = await fetch(`${API_URL}/candidate/jobs/recommended`, {
+    method: "GET",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err.message || "Failed to fetch recommended jobs");
+  }
+
+  return response.json();
+}
+
+export async function getCandidateAllJobs(token, search = "", location = "") {
+  const params = new URLSearchParams();
+  if (search) params.append("search", search);
+  if (location) params.append("location", location);
+
+  const response = await fetch(`${API_URL}/candidate/jobs/all?${params.toString()}`, {
+    method: "GET",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err.message || "Failed to fetch jobs");
+  }
+
+  return response.json();
+}
+
+export async function getPublicJobs(search = "", location = "") {
+  const params = new URLSearchParams();
+  if (search) params.append("search", search);
+  if (location) params.append("location", location);
+
+  const response = await fetch(`${API_URL}/jobs?${params.toString()}`, {
+    method: "GET",
+  });
+
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err.message || "Failed to fetch public jobs");
+  }
+
+  return response.json();
+}
+
+export async function postRecruiterJob(data, token) {
+  const response = await fetch(`${API_URL}/recruiter/jobs`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(data),
+  });
+
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err.message || "Failed to post job");
+  }
+
+  return response.json();
+}
+
+export async function getRecruiterJobs(token) {
+  const response = await fetch(`${API_URL}/recruiter/jobs`, {
+    method: "GET",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err.message || "Failed to fetch recruiter jobs");
+  }
+
+  return response.json();
+}
+
+

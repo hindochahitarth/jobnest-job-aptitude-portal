@@ -1,7 +1,10 @@
-import { useState } from "react";
+import { useContext, useState } from "react";
+import { AuthContext } from "../../context/AuthContext";
 import Card from "../../components/ui/Card";
+import * as api from "../../services/api";
 
 export default function PostJob() {
+  const { token } = useContext(AuthContext);
   const [form, setForm] = useState({
     title: "",
     company: "Acme Corp",
@@ -13,20 +16,48 @@ export default function PostJob() {
     skills: "",
     description: "",
   });
+  const [loading, setLoading] = useState(false);
+  const [toastMessage, setToastMessage] = useState(null);
 
   function handleChange(event) {
     setForm({ ...form, [event.target.name]: event.target.value });
   }
 
-  function handleSubmit(event) {
+  async function handleSubmit(event) {
     event.preventDefault();
-    alert(`Job successfully posted on JobNest: ${form.title}!`);
-    window.history.pushState({}, "", "/dashboard");
-    window.dispatchEvent(new PopStateEvent("popstate"));
+    setLoading(true);
+
+    try {
+      if (token) {
+        await api.postRecruiterJob(
+          {
+            ...form,
+            aptitudeCutoff: parseInt(form.aptitudeCutoff, 10),
+          },
+          token
+        );
+      }
+
+      setToastMessage(`Job successfully published on JobNest: ${form.title}!`);
+      setTimeout(() => {
+        window.history.pushState({}, "", "/dashboard/jobs");
+        window.dispatchEvent(new PopStateEvent("popstate"));
+      }, 1500);
+    } catch (err) {
+      alert(err.message || "Failed to post job. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
     <div className="dashboard-grid two-col">
+      {toastMessage && (
+        <div className="profile-toast success" style={{ position: "fixed", top: 24, right: 24, zIndex: 9999 }}>
+          {toastMessage}
+        </div>
+      )}
+
       <div className="main-col">
         <Card title="Post a New Job Opening" icon="✍️">
           <form className="job-form" onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 16 }}>
@@ -116,8 +147,20 @@ export default function PostJob() {
               />
             </div>
 
-            <button type="submit" className="btn btn-primary btn-lg" style={{ marginTop: 8 }}>
-              Publish Job & Screen Applicants
+            <div className="input-group">
+              <label>Job Description</label>
+              <textarea
+                className="input-field"
+                name="description"
+                value={form.description}
+                onChange={handleChange}
+                placeholder="Key responsibilities, team culture, requirements..."
+                rows={4}
+              />
+            </div>
+
+            <button type="submit" className="btn btn-primary btn-lg" style={{ marginTop: 8 }} disabled={loading}>
+              {loading ? "Publishing..." : "Publish Job & Screen Applicants"}
             </button>
           </form>
         </Card>

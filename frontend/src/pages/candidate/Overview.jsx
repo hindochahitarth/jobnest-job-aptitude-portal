@@ -16,25 +16,40 @@ const performance = [
   { name: "Week 4", score: 85 },
 ];
 
-const jobs = [
-  { id: 1, title: "Frontend React Developer", company: "Acme Tech", location: "Remote / Bengaluru", match: 92, snippet: "Build high-performance web interfaces and component design systems.", salary: "₹8 LPA - ₹12 LPA" },
-  { id: 2, title: "Product Analyst", company: "NexGen Analytics", location: "Bengaluru", match: 84, snippet: "Analyze product metrics, candidate funnels, and data visualizations.", salary: "₹10 LPA - ₹14 LPA" },
-  { id: 3, title: "Software Engineer Trainee", company: "ScaleUp Systems", location: "Hyderabad", match: 76, snippet: "Support core API services and write automated unit tests.", salary: "₹6 LPA - ₹9 LPA" },
-];
-
 export default function Overview() {
   const { user, token } = useContext(AuthContext);
   const userName = user?.name || "Candidate User";
   const userInitial = userName.charAt(0).toUpperCase();
 
   const [profile, setProfile] = useState(null);
+  const [recommendedJobs, setRecommendedJobs] = useState([]);
+  const [loadingJobs, setLoadingJobs] = useState(true);
 
   useEffect(() => {
     if (!token) return;
     let cancelled = false;
+
+    // Fetch profile and matching jobs
     api.getProfile(token)
       .then((data) => { if (!cancelled) setProfile(data); })
       .catch(() => {});
+
+    api.getRecommendedJobs(token)
+      .then(async (jobs) => {
+        if (cancelled) return;
+        if (jobs && jobs.length > 0) {
+          setRecommendedJobs(jobs.slice(0, 3));
+        } else {
+          // If no matching jobs yet, fetch latest general open jobs
+          const all = await api.getCandidateAllJobs(token).catch(() => []);
+          if (!cancelled) setRecommendedJobs(all.slice(0, 3));
+        }
+      })
+      .catch(() => {})
+      .finally(() => {
+        if (!cancelled) setLoadingJobs(false);
+      });
+
     return () => { cancelled = true; };
   }, [token]);
 
@@ -47,13 +62,17 @@ export default function Overview() {
   const stats = [
     { label: "Profile Completion", value: `${completionPct}%`, icon: "⚡" },
     { label: "Applications Sent", value: "14", icon: "📩" },
-    { label: "Average Match", value: "78%", icon: "🎯" },
+    { label: "Average Match", value: recommendedJobs[0]?.matchScore ? `${recommendedJobs[0].matchScore}%` : "78%", icon: "🎯" },
     { label: "Aptitude Tests", value: "6 Completed", icon: "🧠" },
   ];
 
   function navigateTo(path) {
     window.history.pushState({}, "", path);
     window.dispatchEvent(new PopStateEvent("popstate"));
+  }
+
+  function handleApply(job) {
+    alert(`Successfully applied to ${job.title} at ${job.company}!`);
   }
 
   return (
@@ -89,19 +108,42 @@ export default function Overview() {
             </div>
           </ChartCard>
 
-          {/* Recommended Roles Feed */}
-          <Card title="Recommended Roles for You" icon="💼">
+          {/* Recommended Roles Feed — Now Dynamic */}
+          <Card
+            title="Recommended Roles for You"
+            icon="💼"
+            footer={
+              <button
+                type="button"
+                className="btn btn-ghost btn-sm"
+                style={{ width: "100%", color: "var(--primary)", fontWeight: 700 }}
+                onClick={() => navigateTo("/dashboard/jobs")}
+              >
+                Explore All Matching Jobs →
+              </button>
+            }
+          >
             <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-              {jobs.map((j) => (
-                <JobCard key={j.id} job={j} onApply={(job) => alert(`Applied to ${job.title} at ${job.company}`)} />
-              ))}
+              {loadingJobs ? (
+                <div style={{ textAlign: "center", padding: "20px 0", color: "var(--text-subtle)", fontSize: 13 }}>
+                  Loading skill-matched jobs...
+                </div>
+              ) : recommendedJobs.length > 0 ? (
+                recommendedJobs.map((j) => (
+                  <JobCard key={j.id} job={j} onApply={handleApply} />
+                ))
+              ) : (
+                <div style={{ textAlign: "center", padding: 20, color: "var(--text-subtle)", fontSize: 13 }}>
+                  Add your skills in Profile to unlock personalized job recommendations!
+                </div>
+              )}
             </div>
           </Card>
         </div>
 
         {/* Side Column */}
         <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-          {/* Profile Card Widget — Now Dynamic */}
+          {/* Profile Card Widget — Dynamic */}
           <div className="profile-card-widget">
             <div className="profile-card-banner" />
             <div className="profile-card-avatar-wrap">

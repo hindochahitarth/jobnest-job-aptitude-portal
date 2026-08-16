@@ -1,8 +1,6 @@
-package org.miniproject.jobnestjobaptitudeportal.controller.recruiter;
+package org.miniproject.jobnestjobaptitudeportal.controller.candidate;
 
-import jakarta.validation.Valid;
 import java.util.List;
-import org.miniproject.jobnestjobaptitudeportal.dto.request.JobPostRequest;
 import org.miniproject.jobnestjobaptitudeportal.dto.response.JobResponse;
 import org.miniproject.jobnestjobaptitudeportal.entity.User;
 import org.miniproject.jobnestjobaptitudeportal.exception.ApiException;
@@ -12,36 +10,36 @@ import org.miniproject.jobnestjobaptitudeportal.service.job.JobService;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/recruiter/jobs")
-public class JobController {
+@RequestMapping("/api/candidate/jobs")
+public class CandidateJobController {
 
     private final JobService jobService;
     private final UserRepository userRepository;
 
-    public JobController(JobService jobService, UserRepository userRepository) {
+    public CandidateJobController(JobService jobService, UserRepository userRepository) {
         this.jobService = jobService;
         this.userRepository = userRepository;
     }
 
-    @PostMapping
-    public JobResponse postJob(
-            Authentication authentication,
-            @Valid @RequestBody JobPostRequest request
-    ) {
-        Long recruiterId = resolveUserId(authentication);
-        return jobService.createJob(recruiterId, request);
+    @GetMapping("/recommended")
+    public List<JobResponse> getRecommendedJobs(Authentication authentication) {
+        Long userId = resolveUserId(authentication);
+        return jobService.getRecommendedJobsForCandidate(userId);
     }
 
-    @GetMapping
-    public List<JobResponse> getMyJobs(Authentication authentication) {
-        Long recruiterId = resolveUserId(authentication);
-        return jobService.getJobsByRecruiter(recruiterId);
+    @GetMapping("/all")
+    public List<JobResponse> getAllJobs(
+            Authentication authentication,
+            @RequestParam(value = "search", required = false) String search,
+            @RequestParam(value = "location", required = false) String location
+    ) {
+        Long userId = resolveUserId(authentication);
+        return jobService.getAllJobs(search, location, userId);
     }
 
     private Long resolveUserId(Authentication authentication) {
