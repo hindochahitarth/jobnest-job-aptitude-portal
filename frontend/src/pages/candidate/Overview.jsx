@@ -1,16 +1,13 @@
-import { useContext } from "react";
+import { useContext, useState, useEffect } from "react";
 import { AuthContext } from "../../context/AuthContext";
 import JobCard from "../../components/job/JobCard";
 import Card from "../../components/ui/Card";
 import ChartCard from "../../components/ui/ChartCard";
 import { AreaChart, Area, XAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
+import * as api from "../../services/api";
 
-const stats = [
-  { label: "Profile Completion", value: "84%", icon: "⚡" },
-  { label: "Applications Sent", value: "14", icon: "📩" },
-  { label: "Average Match", value: "78%", icon: "🎯" },
-  { label: "Aptitude Tests", value: "6 Completed", icon: "🧠" },
-];
+const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:8080/api";
+const BACKEND_BASE = API_BASE.replace("/api", "");
 
 const performance = [
   { name: "Week 1", score: 64 },
@@ -26,9 +23,33 @@ const jobs = [
 ];
 
 export default function Overview() {
-  const { user } = useContext(AuthContext);
+  const { user, token } = useContext(AuthContext);
   const userName = user?.name || "Candidate User";
   const userInitial = userName.charAt(0).toUpperCase();
+
+  const [profile, setProfile] = useState(null);
+
+  useEffect(() => {
+    if (!token) return;
+    let cancelled = false;
+    api.getProfile(token)
+      .then((data) => { if (!cancelled) setProfile(data); })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [token]);
+
+  const completionPct = profile?.completionPercentage ?? 0;
+  const profileImageSrc = profile?.profileImageUrl
+    ? `${BACKEND_BASE}${profile.profileImageUrl}`
+    : null;
+  const headline = profile?.headline || "Complete your profile to stand out";
+
+  const stats = [
+    { label: "Profile Completion", value: `${completionPct}%`, icon: "⚡" },
+    { label: "Applications Sent", value: "14", icon: "📩" },
+    { label: "Average Match", value: "78%", icon: "🎯" },
+    { label: "Aptitude Tests", value: "6 Completed", icon: "🧠" },
+  ];
 
   function navigateTo(path) {
     window.history.pushState({}, "", path);
@@ -80,27 +101,48 @@ export default function Overview() {
 
         {/* Side Column */}
         <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-          {/* Left Profile Card Widget moved cleanly into Side Column */}
+          {/* Profile Card Widget — Now Dynamic */}
           <div className="profile-card-widget">
             <div className="profile-card-banner" />
             <div className="profile-card-avatar-wrap">
-              <div className="profile-card-avatar">{userInitial}</div>
+              {profileImageSrc ? (
+                <img
+                  src={profileImageSrc}
+                  alt={userName}
+                  className="profile-card-avatar"
+                  style={{ objectFit: "cover", borderRadius: "50%", width: 56, height: 56, border: "3px solid var(--surface)" }}
+                  onError={(e) => {
+                    e.target.style.display = "none";
+                    e.target.nextSibling && (e.target.nextSibling.style.display = "flex");
+                  }}
+                />
+              ) : null}
+              <div
+                className="profile-card-avatar"
+                style={{ display: profileImageSrc ? "none" : "flex" }}
+              >
+                {userInitial}
+              </div>
             </div>
             <div className="profile-card-content">
               <div className="profile-card-name">{userName}</div>
               <div className="profile-card-headline">
-                Computer Science Aspirant | React & Web Dev Enthusiast
+                {headline}
               </div>
 
               <div className="profile-meter-box">
                 <div className="meter-header">
                   <span>Profile Strength</span>
-                  <span>84%</span>
+                  <span>{completionPct}%</span>
                 </div>
                 <div className="meter-bar">
-                  <div className="meter-fill" style={{ width: "84%" }} />
+                  <div className="meter-fill" style={{ width: `${completionPct}%` }} />
                 </div>
-                <div className="meter-subtext">Add 1 project to reach 100% complete!</div>
+                <div className="meter-subtext">
+                  {completionPct === 100
+                    ? "🎉 Your profile is 100% complete!"
+                    : "Complete your profile to boost visibility"}
+                </div>
               </div>
 
               <div style={{ marginTop: 14, display: "flex", flexDirection: "column", gap: 8 }}>

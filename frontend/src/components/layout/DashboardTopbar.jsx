@@ -1,10 +1,29 @@
-import { useContext } from "react";
+import { useContext, useState, useEffect } from "react";
 import { AuthContext } from "../../context/AuthContext";
+import * as api from "../../services/api";
+
+const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:8080/api";
+const BACKEND_BASE = API_BASE.replace("/api", "");
 
 export default function DashboardTopbar({ title, subtitle }) {
-  const { user, logout } = useContext(AuthContext);
+  const { user, token, logout } = useContext(AuthContext);
   const userName = user?.name || "Candidate";
   const userInitial = userName.charAt(0).toUpperCase();
+
+  const [profile, setProfile] = useState(null);
+
+  useEffect(() => {
+    if (!token || user?.role === "RECRUITER") return;
+    let cancelled = false;
+    api.getProfile(token)
+      .then((data) => { if (!cancelled) setProfile(data); })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [token, user?.role]);
+
+  const profileImageSrc = profile?.profileImageUrl
+    ? `${BACKEND_BASE}${profile.profileImageUrl}`
+    : null;
 
   return (
     <div className="dashboard-topbar">
@@ -29,7 +48,24 @@ export default function DashboardTopbar({ title, subtitle }) {
           window.history.pushState({}, "", target);
           window.dispatchEvent(new PopStateEvent("popstate"));
         }}>
-          <div className="user-avatar">{userInitial}</div>
+          {profileImageSrc ? (
+            <img
+              src={profileImageSrc}
+              alt={userName}
+              className="user-avatar"
+              style={{ objectFit: "cover" }}
+              onError={(e) => {
+                e.target.style.display = "none";
+                e.target.nextSibling && (e.target.nextSibling.style.display = "flex");
+              }}
+            />
+          ) : null}
+          <div
+            className="user-avatar"
+            style={{ display: profileImageSrc ? "none" : "flex" }}
+          >
+            {userInitial}
+          </div>
           <div className="user-info">
             <span className="user-name">{userName}</span>
             <span className="user-role">{user?.role === "RECRUITER" ? "Recruiter" : "Candidate"}</span>
