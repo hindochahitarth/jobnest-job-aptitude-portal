@@ -85,3 +85,72 @@ export function authFetch(token) {
     return fetch(`${API_URL}${path}`, { ...opts, headers });
   };
 }
+
+export async function getProfile(token) {
+  const response = await fetch(`${API_URL}/candidate/profile`, {
+    method: "GET",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err.message || "Failed to load profile");
+  }
+
+  return response.json();
+}
+
+export async function updateProfile(data, token) {
+  const response = await fetch(`${API_URL}/candidate/profile`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(data),
+  });
+
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err.message || "Failed to update profile");
+  }
+
+  return response.json();
+}
+
+export async function uploadProfileImage(file, token) {
+  const formData = new FormData();
+  formData.append("file", file);
+
+  const response = await fetch(`${API_URL}/candidate/profile/image`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+    body: formData,
+  });
+
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err.message || "Failed to upload profile image");
+  }
+
+  return response.json();
+}
+
+export async function uploadProfileResume(file, token) {
+  const formData = new FormData();
+  formData.append("file", file);
+
+  const response = await fetch(`${API_URL}/candidate/profile/resume`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+    body: formData,
+  });
+
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err.message || "Failed to upload resume");
+  }
+
+  return response.json();
+}
+
