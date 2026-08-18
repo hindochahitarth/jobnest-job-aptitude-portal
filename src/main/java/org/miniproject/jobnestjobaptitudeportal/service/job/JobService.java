@@ -29,6 +29,8 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class JobService {
 
+    private static final String BASE_UPLOAD_URL = "http://localhost:8080/uploads";
+
     private final JobRepository jobRepository;
     private final CandidateProfileRepository profileRepository;
     private final ApplicationRepository applicationRepository;
@@ -160,15 +162,20 @@ public class JobService {
         Map<Long, User> userMap = userRepository.findAllById(candidateIds).stream()
                 .collect(Collectors.toMap(User::getId, Function.identity()));
 
+        // Also fetch candidate profiles for rich profile display
+        Map<Long, CandidateProfile> profileMap = profileRepository.findAllByUserIdIn(candidateIds).stream()
+                .collect(Collectors.toMap(CandidateProfile::getUserId, Function.identity()));
+
         return applications.stream()
                 .map(app -> {
                     Job job = jobMap.get(app.getJobId());
                     User user = userMap.get(app.getCandidateUserId());
+                    CandidateProfile profile = profileMap.get(app.getCandidateUserId());
                     String title = job != null ? job.getTitle() : "Unknown Job";
                     String company = job != null ? job.getCompany() : "";
                     String name = user != null ? user.getName() : "Unknown";
                     String email = user != null ? user.getEmail() : "";
-                    return ApplicationResponse.forRecruiter(app, title, company, name, email);
+                    return ApplicationResponse.forRecruiter(app, title, company, name, email, profile, BASE_UPLOAD_URL);
                 })
                 .toList();
     }
@@ -195,9 +202,11 @@ public class JobService {
         Application saved = applicationRepository.save(application);
 
         User candidate = userRepository.findById(saved.getCandidateUserId()).orElse(null);
+        CandidateProfile profile = profileRepository.findByUserId(saved.getCandidateUserId()).orElse(null);
         return ApplicationResponse.forRecruiter(saved, job.getTitle(), job.getCompany(),
                 candidate != null ? candidate.getName() : "Unknown",
-                candidate != null ? candidate.getEmail() : "");
+                candidate != null ? candidate.getEmail() : "",
+                profile, BASE_UPLOAD_URL);
     }
 
     // ── Private Helpers ───────────────────────────────────────────────────────
