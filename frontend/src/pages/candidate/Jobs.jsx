@@ -33,11 +33,12 @@ export default function JobsPage({ embed = false }) {
 
       try {
         if (isLoggedIn && token && user.role === "CANDIDATE") {
-          // Fetch candidate profile and jobs in parallel
-          const [profileData, recJobs, allJobsData] = await Promise.all([
+          // Fetch candidate profile, jobs, and existing applications in parallel
+          const [profileData, recJobs, allJobsData, myApplications] = await Promise.all([
             api.getProfile(token).catch(() => null),
             api.getRecommendedJobs(token).catch(() => []),
             api.getCandidateAllJobs(token).catch(() => []),
+            api.getCandidateApplications(token).catch(() => []),
           ]);
 
           if (cancelled) return;
@@ -45,6 +46,13 @@ export default function JobsPage({ embed = false }) {
           setCandidateProfile(profileData);
           setRecommendedJobs(recJobs);
           setAllJobs(allJobsData);
+
+          // Restore already-applied state from DB
+          if (myApplications && myApplications.length > 0) {
+            const applied = {};
+            myApplications.forEach((app) => { applied[app.jobId] = true; });
+            setAppliedJobs(applied);
+          }
 
           // Choose default tab and selected job
           if (recJobs && recJobs.length > 0) {
@@ -118,16 +126,30 @@ export default function JobsPage({ embed = false }) {
     }
   }, [activeTab, searchTerm, locationFilter, filteredJobs.length]);
 
-  function handleApply(job) {
+  async function handleApply(job) {
     if (!isLoggedIn) {
       window.history.pushState({}, "", "/login");
       window.dispatchEvent(new PopStateEvent("popstate"));
       return;
     }
 
-    setAppliedJobs((prev) => ({ ...prev, [job.id]: true }));
-    setToastMessage(`🎉 Application sent to ${job.company} for "${job.title}"!`);
-    setTimeout(() => setToastMessage(null), 3500);
+    // Already applied (optimistic check)
+    if (appliedJobs[job.id]) return;
+
+    try {
+      await api.applyToJob(job.id, token);
+      setAppliedJobs((prev) => ({ ...prev, [job.id]: true }));
+      setToastMessage(`🎉 Application sent to ${job.company} for "${job.title}"!`);
+    } catch (err) {
+      if (err.message && err.message.toLowerCase().includes("already applied")) {
+        setAppliedJobs((prev) => ({ ...prev, [job.id]: true }));
+        setToastMessage(`ℹ️ You already applied to "${job.title}".`);
+      } else {
+        setToastMessage(`⚠️ ${err.message || "Failed to apply. Please try again."}`);
+      }
+    } finally {
+      setTimeout(() => setToastMessage(null), 3500);
+    }
   }
 
   function navigateTo(path) {

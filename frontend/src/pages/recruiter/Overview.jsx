@@ -1,40 +1,89 @@
+import { useContext, useEffect, useState } from "react";
+import { AuthContext } from "../../context/AuthContext";
 import Card from "../../components/ui/Card";
 import ChartCard from "../../components/ui/ChartCard";
 import Table from "../../components/ui/Table";
+import * as api from "../../services/api";
 import { BarChart, Bar, XAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 
-const stats = [
-  { label: "Active Open Roles", value: "12", icon: "💼" },
-  { label: "Total Candidates", value: "438", icon: "👥" },
-  { label: "Aptitude Screened", value: "312", icon: "🧠" },
-  { label: "Shortlisted", value: "46", icon: "⭐" },
-];
-
+// Static chart data (activity trend — decorative)
 const hiresData = [
-  { name: "Week 1", applicants: 45, hires: 3 },
-  { name: "Week 2", applicants: 78, hires: 5 },
-  { name: "Week 3", applicants: 110, hires: 8 },
-  { name: "Week 4", applicants: 95, hires: 6 },
-];
-
-const openJobs = [
-  { id: 1, title: "Frontend Engineer (React)", applicants: 142, testCutoff: "> 85%", status: "Active" },
-  { id: 2, title: "Data Analyst Trainee", applicants: 89, testCutoff: "> 80%", status: "Active" },
-  { id: 3, title: "Full Stack SDE", applicants: 116, testCutoff: "> 90%", status: "Active" },
-  { id: 4, title: "DevOps Engineer", applicants: 91, testCutoff: "> 75%", status: "Reviewing" },
+  { name: "Week 1", applicants: 0, hires: 0 },
+  { name: "Week 2", applicants: 0, hires: 0 },
+  { name: "Week 3", applicants: 0, hires: 0 },
+  { name: "Week 4", applicants: 0, hires: 0 },
 ];
 
 export default function Overview() {
+  const { token } = useContext(AuthContext);
+
+  const [jobs, setJobs] = useState([]);
+  const [applicants, setApplicants] = useState([]);
+  const [loading, setLoading] = useState(true);
+
   function navigateTo(path) {
     window.history.pushState({}, "", path);
     window.dispatchEvent(new PopStateEvent("popstate"));
   }
 
+  useEffect(() => {
+    let cancelled = false;
+    async function loadData() {
+      setLoading(true);
+      try {
+        const [jobsData, applicantsData] = await Promise.all([
+          api.getRecruiterJobs(token).catch(() => []),
+          api.getRecruiterApplicants(token).catch(() => []),
+        ]);
+        if (cancelled) return;
+        setJobs(jobsData);
+        setApplicants(applicantsData);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }
+    if (token) loadData();
+    return () => { cancelled = true; };
+  }, [token]);
+
+  // Derive stats from real data
+  const totalApplicants = applicants.length;
+  const shortlisted = applicants.filter((a) => a.status === "SHORTLISTED").length;
+
+  // Build per-job applicant count map
+  const applicantCountByJob = {};
+  applicants.forEach((app) => {
+    applicantCountByJob[app.jobId] = (applicantCountByJob[app.jobId] || 0) + 1;
+  });
+
+  const stats = [
+    { label: "Active Open Roles", value: loading ? "—" : String(jobs.length), icon: "💼" },
+    { label: "Total Applicants", value: loading ? "—" : String(totalApplicants), icon: "👥" },
+    { label: "Aptitude Screened", value: loading ? "—" : String(totalApplicants), icon: "🧠" },
+    { label: "Shortlisted", value: loading ? "—" : String(shortlisted), icon: "⭐" },
+  ];
+
   const jobColumns = [
-    { key: "title", label: "Job Title", render: (r) => <strong style={{ color: "var(--text-main)", fontSize: 13.5 }}>{r.title}</strong> },
-    { key: "applicants", label: "Total Applicants", accessor: "applicants" },
-    { key: "testCutoff", label: "Aptitude Cutoff", render: (r) => <span className="badge-v2 primary">{r.testCutoff}</span> },
-    { key: "status", label: "Status", render: (r) => <span className="badge-v2 success">{r.status}</span> },
+    {
+      key: "title",
+      label: "Job Title",
+      render: (r) => <strong style={{ color: "var(--text-main)", fontSize: 13.5 }}>{r.title}</strong>,
+    },
+    {
+      key: "applicants",
+      label: "Total Applicants",
+      render: (r) => <span>{applicantCountByJob[r.id] || 0}</span>,
+    },
+    {
+      key: "aptitudeCutoff",
+      label: "Aptitude Cutoff",
+      render: (r) => <span className="badge-v2 primary">≥ {r.aptitudeCutoff}%</span>,
+    },
+    {
+      key: "status",
+      label: "Status",
+      render: () => <span className="badge-v2 success">Active</span>,
+    },
     {
       key: "action",
       label: "Action",
@@ -45,6 +94,11 @@ export default function Overview() {
       ),
     },
   ];
+
+  // Top 3 shortlisted candidates for the sidebar card
+  const topCandidates = applicants
+    .filter((a) => a.status === "SHORTLISTED")
+    .slice(0, 3);
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
@@ -96,46 +150,83 @@ export default function Overview() {
           </ChartCard>
 
           <Card title="Active Open Job Postings" icon="💼">
-            <Table columns={jobColumns} data={openJobs} />
+            {loading ? (
+              <div style={{ textAlign: "center", padding: 24, color: "var(--text-muted)", fontSize: 14 }}>
+                <div className="spinner" style={{ margin: "0 auto 10px" }} />
+                Loading your job postings...
+              </div>
+            ) : jobs.length === 0 ? (
+              <div style={{ textAlign: "center", padding: 32 }}>
+                <div style={{ fontSize: 36, marginBottom: 10 }}>📋</div>
+                <p style={{ color: "var(--text-muted)", fontSize: 14, marginBottom: 14 }}>
+                  You haven't posted any jobs yet.
+                </p>
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  onClick={() => navigateTo("/dashboard/post-job")}
+                >
+                  + Post Your First Job
+                </button>
+              </div>
+            ) : (
+              <Table columns={jobColumns} data={jobs} />
+            )}
           </Card>
         </div>
 
         {/* Side Column */}
         <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-          <Card title="Top Aptitude-Matched Candidates" icon="⭐">
-            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-              <div style={{ padding: 12, background: "var(--bg-subtle)", borderRadius: "var(--radius-sm)", border: "1px solid var(--surface-border)" }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <strong style={{ fontSize: 13.5 }}>Aditi Sharma</strong>
-                  <span className="badge-v2 success">98th %ile</span>
-                </div>
-                <div style={{ fontSize: 11.5, color: "var(--text-subtle)", marginTop: 2 }}>Applied for: Frontend Engineer</div>
+          <Card title="Top Shortlisted Candidates" icon="⭐">
+            {loading ? (
+              <div style={{ textAlign: "center", padding: 20, color: "var(--text-muted)", fontSize: 13 }}>Loading...</div>
+            ) : topCandidates.length === 0 ? (
+              <div style={{ textAlign: "center", padding: 24 }}>
+                <div style={{ fontSize: 32, marginBottom: 8 }}>🔍</div>
+                <p style={{ color: "var(--text-muted)", fontSize: 13 }}>
+                  No shortlisted candidates yet.<br />
+                  Go to Applicants to review and shortlist.
+                </p>
                 <button
                   type="button"
                   className="btn btn-secondary btn-sm"
-                  style={{ marginTop: 8, width: "100%" }}
+                  style={{ marginTop: 10 }}
                   onClick={() => navigateTo("/dashboard/applicants")}
                 >
-                  Review Application
+                  View Applicants
                 </button>
               </div>
-
-              <div style={{ padding: 12, background: "var(--bg-subtle)", borderRadius: "var(--radius-sm)", border: "1px solid var(--surface-border)" }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <strong style={{ fontSize: 13.5 }}>Rohan Patel</strong>
-                  <span className="badge-v2 success">94th %ile</span>
-                </div>
-                <div style={{ fontSize: 11.5, color: "var(--text-subtle)", marginTop: 2 }}>Applied for: Data Analyst</div>
-                <button
-                  type="button"
-                  className="btn btn-secondary btn-sm"
-                  style={{ marginTop: 8, width: "100%" }}
-                  onClick={() => navigateTo("/dashboard/applicants")}
-                >
-                  Review Application
-                </button>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                {topCandidates.map((app) => (
+                  <div
+                    key={app.id}
+                    style={{
+                      padding: 12,
+                      background: "var(--bg-subtle)",
+                      borderRadius: "var(--radius-sm)",
+                      border: "1px solid var(--surface-border)",
+                    }}
+                  >
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                      <strong style={{ fontSize: 13.5 }}>{app.candidateName}</strong>
+                      <span className="badge-v2 success">Shortlisted</span>
+                    </div>
+                    <div style={{ fontSize: 11.5, color: "var(--text-subtle)", marginTop: 2 }}>
+                      Applied for: {app.jobTitle}
+                    </div>
+                    <button
+                      type="button"
+                      className="btn btn-secondary btn-sm"
+                      style={{ marginTop: 8, width: "100%" }}
+                      onClick={() => navigateTo("/dashboard/applicants")}
+                    >
+                      Review Application
+                    </button>
+                  </div>
+                ))}
               </div>
-            </div>
+            )}
           </Card>
 
           <Card title="Quick AI Actions" icon="🤖">

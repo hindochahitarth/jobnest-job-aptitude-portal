@@ -235,4 +235,62 @@ export async function getRecruiterJobs(token) {
   return response.json();
 }
 
+export async function applyToJob(jobId, token) {
+  const response = await fetch(`${API_URL}/candidate/jobs/${jobId}/apply`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+  });
 
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err.message || "Failed to apply to job");
+  }
+
+  return response.json();
+}
+
+export async function getCandidateApplications(token) {
+  const response = await fetch(`${API_URL}/candidate/applications`, {
+    method: "GET",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err.message || "Failed to fetch your applications");
+  }
+
+  return response.json();
+}
+
+export async function getRecruiterApplicants(token) {
+  const response = await fetch(`${API_URL}/recruiter/applicants`, {
+    method: "GET",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err.message || "Failed to fetch applicants");
+  }
+
+  return response.json();
+}
+
+export async function updateApplicantStatus(applicationId, status, token) {
+  const response = await fetch(`${API_URL}/recruiter/applicants/${applicationId}/status`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ status }),
+  });
+
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err.message || "Failed to update status");
+  }
+
+  return response.json();
+}

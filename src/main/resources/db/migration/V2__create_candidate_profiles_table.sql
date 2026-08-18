@@ -11,7 +11,7 @@ CREATE TABLE candidate_profiles (
     profile_image_url VARCHAR(500),
     resume_file_name VARCHAR(255),
     profile_completed BOOLEAN NOT NULL DEFAULT FALSE,
-    created_at TIMESTAMP NOT NULL,
-    updated_at TIMESTAMP NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     CONSTRAINT fk_candidate_profile_user FOREIGN KEY (user_id) REFERENCES users(id)
 );

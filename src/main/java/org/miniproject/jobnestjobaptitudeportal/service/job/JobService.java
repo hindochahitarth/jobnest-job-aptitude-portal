@@ -6,14 +6,22 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Optional;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import org.miniproject.jobnestjobaptitudeportal.dto.request.JobPostRequest;
+import org.miniproject.jobnestjobaptitudeportal.dto.response.ApplicationResponse;
 import org.miniproject.jobnestjobaptitudeportal.dto.response.JobResponse;
+import org.miniproject.jobnestjobaptitudeportal.entity.Application;
 import org.miniproject.jobnestjobaptitudeportal.entity.CandidateProfile;
 import org.miniproject.jobnestjobaptitudeportal.entity.Job;
+import org.miniproject.jobnestjobaptitudeportal.entity.User;
 import org.miniproject.jobnestjobaptitudeportal.exception.ApiException;
+import org.miniproject.jobnestjobaptitudeportal.repository.ApplicationRepository;
 import org.miniproject.jobnestjobaptitudeportal.repository.CandidateProfileRepository;
 import org.miniproject.jobnestjobaptitudeportal.repository.JobRepository;
+import org.miniproject.jobnestjobaptitudeportal.repository.UserRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,11 +31,20 @@ public class JobService {
 
     private final JobRepository jobRepository;
     private final CandidateProfileRepository profileRepository;
+    private final ApplicationRepository applicationRepository;
+    private final UserRepository userRepository;
 
-    public JobService(JobRepository jobRepository, CandidateProfileRepository profileRepository) {
+    public JobService(JobRepository jobRepository,
+                      CandidateProfileRepository profileRepository,
+                      ApplicationRepository applicationRepository,
+                      UserRepository userRepository) {
         this.jobRepository = jobRepository;
         this.profileRepository = profileRepository;
+        this.applicationRepository = applicationRepository;
+        this.userRepository = userRepository;
     }
+
+    // ── Job Queries ───────────────────────────────────────────────────────────
 
     public List<JobResponse> getAllJobs(String search, String location, Long candidateUserId) {
         List<Job> allJobs = jobRepository.findAllByOrderByCreatedAtDesc();
@@ -50,13 +67,11 @@ public class JobService {
 
         for (Job job : allJobs) {
             JobResponse response = buildJobResponse(job, candidateSkills);
-            // Only include jobs that have at least one matching skill
             if (response.matchedSkills() != null && !response.matchedSkills().isEmpty()) {
                 matchedList.add(response);
             }
         }
 
-        // Sort by match score descending
         matchedList.sort(Comparator.comparingInt(JobResponse::matchScore).reversed());
         return matchedList;
     }
@@ -93,10 +108,102 @@ public class JobService {
         return buildJobResponse(job, candidateSkills);
     }
 
-    private List<String> getCandidateSkills(Long candidateUserId) {
-        if (candidateUserId == null) {
-            return Collections.emptyList();
+    // ── Application: Candidate ────────────────────────────────────────────────
+
+    @Transactional
+    public ApplicationResponse applyToJob(Long candidateUserId, Long jobId) {
+        Job job = jobRepository.findById(jobId)
+                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Job not found"));
+
+        if (applicationRepository.existsByJobIdAndCandidateUserId(jobId, candidateUserId)) {
+            throw new ApiException(HttpStatus.CONFLICT, "You have already applied to this job");
         }
+
+        Application application = new Application(jobId, candidateUserId);
+        Application saved = applicationRepository.save(application);
+        return ApplicationResponse.forCandidate(saved, job.getTitle(), job.getCompany());
+    }
+
+    public List<ApplicationResponse> getApplicationsForCandidate(Long candidateUserId) {
+        List<Application> applications = applicationRepository.findByCandidateUserId(candidateUserId);
+        if (applications.isEmpty()) return Collections.emptyList();
+
+        List<Long> jobIds = applications.stream().map(Application::getJobId).toList();
+        Map<Long, Job> jobMap = jobRepository.findAllById(jobIds).stream()
+                .collect(Collectors.toMap(Job::getId, Function.identity()));
+
+        return applications.stream()
+                .map(app -> {
+                    Job job = jobMap.get(app.getJobId());
+                    String title = job != null ? job.getTitle() : "Unknown Job";
+                    String company = job != null ? job.getCompany() : "";
+                    return ApplicationResponse.forCandidate(app, title, company);
+                })
+                .toList();
+    }
+
+    // ── Application: Recruiter ────────────────────────────────────────────────
+
+    public List<ApplicationResponse> getApplicationsByRecruiter(Long recruiterId) {
+        List<Job> myJobs = jobRepository.findByRecruiterId(recruiterId);
+        if (myJobs.isEmpty()) return Collections.emptyList();
+
+        List<Long> myJobIds = myJobs.stream().map(Job::getId).toList();
+        Map<Long, Job> jobMap = myJobs.stream()
+                .collect(Collectors.toMap(Job::getId, Function.identity()));
+
+        List<Application> applications = applicationRepository.findByJobIdIn(myJobIds);
+        if (applications.isEmpty()) return Collections.emptyList();
+
+        List<Long> candidateIds = applications.stream()
+                .map(Application::getCandidateUserId).distinct().toList();
+        Map<Long, User> userMap = userRepository.findAllById(candidateIds).stream()
+                .collect(Collectors.toMap(User::getId, Function.identity()));
+
+        return applications.stream()
+                .map(app -> {
+                    Job job = jobMap.get(app.getJobId());
+                    User user = userMap.get(app.getCandidateUserId());
+                    String title = job != null ? job.getTitle() : "Unknown Job";
+                    String company = job != null ? job.getCompany() : "";
+                    String name = user != null ? user.getName() : "Unknown";
+                    String email = user != null ? user.getEmail() : "";
+                    return ApplicationResponse.forRecruiter(app, title, company, name, email);
+                })
+                .toList();
+    }
+
+    @Transactional
+    public ApplicationResponse updateApplicationStatus(Long applicationId, String status, Long recruiterId) {
+        Application application = applicationRepository.findById(applicationId)
+                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Application not found"));
+
+        // Verify this application belongs to one of the recruiter's jobs
+        Job job = jobRepository.findById(application.getJobId())
+                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Job not found"));
+
+        if (!job.getRecruiterId().equals(recruiterId)) {
+            throw new ApiException(HttpStatus.FORBIDDEN, "You can only manage applications for your own jobs");
+        }
+
+        String normalized = status.toUpperCase(Locale.ROOT);
+        if (!normalized.equals("APPLIED") && !normalized.equals("SHORTLISTED") && !normalized.equals("REJECTED")) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, "Invalid status. Allowed: APPLIED, SHORTLISTED, REJECTED");
+        }
+
+        application.setStatus(normalized);
+        Application saved = applicationRepository.save(application);
+
+        User candidate = userRepository.findById(saved.getCandidateUserId()).orElse(null);
+        return ApplicationResponse.forRecruiter(saved, job.getTitle(), job.getCompany(),
+                candidate != null ? candidate.getName() : "Unknown",
+                candidate != null ? candidate.getEmail() : "");
+    }
+
+    // ── Private Helpers ───────────────────────────────────────────────────────
+
+    private List<String> getCandidateSkills(Long candidateUserId) {
+        if (candidateUserId == null) return Collections.emptyList();
 
         Optional<CandidateProfile> profileOpt = profileRepository.findByUserId(candidateUserId);
         if (profileOpt.isEmpty() || profileOpt.get().getTechStack() == null || profileOpt.get().getTechStack().isBlank()) {
@@ -133,7 +240,6 @@ public class JobService {
         Integer matchScore = null;
         if (!matched.isEmpty() && !requiredSkills.isEmpty()) {
             double ratio = (double) matched.size() / requiredSkills.size();
-            // Score ranges realistically from 60% up to 98%
             matchScore = (int) Math.round(55 + (ratio * 43));
             if (matchScore > 98) matchScore = 98;
         }
@@ -165,9 +271,7 @@ public class JobService {
             boolean matchTitle = job.getTitle().toLowerCase(Locale.ROOT).contains(q);
             boolean matchCompany = job.getCompany().toLowerCase(Locale.ROOT).contains(q);
             boolean matchSkills = job.getSkills() != null && job.getSkills().toLowerCase(Locale.ROOT).contains(q);
-            if (!matchTitle && !matchCompany && !matchSkills) {
-                return false;
-            }
+            if (!matchTitle && !matchCompany && !matchSkills) return false;
         }
 
         if (location != null && !location.isBlank()) {
