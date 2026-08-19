@@ -7,6 +7,7 @@ import Profile from "./Profile";
 import ResumeBuilder from "./ResumeBuilder";
 import MatchScores from "./MatchScores";
 import Tests from "./Tests";
+import AptitudeTest from "./AptitudeTest";
 import Results from "./Results";
 import InterviewPrep from "./InterviewPrep";
 import * as api from "../../services/api";
@@ -24,6 +25,8 @@ function resolveSection(path) {
       return <MatchScores />;
     case "/tests":
       return <Tests />;
+    case "/test-session":
+      return <AptitudeTest />;
     case "/results":
       return <Results />;
     case "/interview":
@@ -58,6 +61,7 @@ export default function Dashboard() {
     { key: "resume", href: "/dashboard/resume", label: "AI Resume Builder", icon: "📄" },
     { key: "match", href: "/dashboard/match-scores", label: "Match Scores", icon: "🎯" },
     { key: "tests", href: "/dashboard/tests", label: "Aptitude Tests", icon: "🧠" },
+    { key: "test-session", href: "/dashboard/test-session", label: "Live Proctored Test", icon: "⚡" },
     { key: "results", href: "/dashboard/results", label: "Test Scorecards", icon: "📊" },
     { key: "interview", href: "/dashboard/interview", label: "Interview Prep", icon: "🧪" },
   ];
