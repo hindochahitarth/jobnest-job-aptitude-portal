@@ -133,7 +133,7 @@ public class CandidateProfileService {
 
         String fileName = saveFile(file, RESUMES_DIR, userId);
         profile.setResumeFileName(file.getOriginalFilename());
-
+        profile.setResumeUrl("/uploads/" + RESUMES_DIR + "/" + fileName);
         CandidateProfile saved = profileRepository.save(profile);
         return CandidateProfileResponse.from(saved, user);
     }

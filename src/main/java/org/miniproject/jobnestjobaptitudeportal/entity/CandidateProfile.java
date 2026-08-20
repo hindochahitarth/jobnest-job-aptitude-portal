@@ -47,6 +47,9 @@ public class CandidateProfile {
     @Column(length = 255)
     private String resumeFileName;
 
+    @Column(length = 500)
+    private String resumeUrl;
+
     @Column(nullable = false)
     private boolean profileCompleted = false;
 
@@ -167,6 +170,14 @@ public class CandidateProfile {
 
     public void setResumeFileName(String resumeFileName) {
         this.resumeFileName = resumeFileName;
+    }
+
+    public String getResumeUrl() {
+        return resumeUrl;
+    }
+
+    public void setResumeUrl(String resumeUrl) {
+        this.resumeUrl = resumeUrl;
     }
 
     public boolean isProfileCompleted() {
