@@ -28,21 +28,11 @@ export default function DashboardTopbar({ title, subtitle }) {
   return (
     <div className="dashboard-topbar">
       <div className="topbar-left">
-        <div className="topbar-search">
-          <span className="search-icon">🔍</span>
-          <input
-            type="text"
-            placeholder="Search jobs, skills, candidates, or tests..."
-          />
-        </div>
+       
       </div>
 
       <div className="topbar-right">
-        <button type="button" className="topbar-icon-btn" title="Notifications">
-          🔔
-          <span className="dot-indicator" />
-        </button>
-
+       
         <div className="user-profile-badge" onClick={() => {
           const target = user?.role === "RECRUITER" ? "/dashboard/post-job" : "/dashboard/profile";
           window.history.pushState({}, "", target);
