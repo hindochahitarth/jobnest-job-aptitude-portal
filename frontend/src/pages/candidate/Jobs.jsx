@@ -20,6 +20,7 @@ export default function JobsPage({ embed = false }) {
   const [activeTab, setActiveTab] = useState("matched"); // 'matched' | 'all'
   const [searchTerm, setSearchTerm] = useState("");
   const [locationFilter, setLocationFilter] = useState("");
+  const [expFilter, setExpFilter] = useState("");
   const [selectedJob, setSelectedJob] = useState(null);
   const [appliedJobs, setAppliedJobs] = useState({});
   const [toastMessage, setToastMessage] = useState(null);
@@ -98,10 +99,17 @@ export default function JobsPage({ embed = false }) {
   // Determine current list to display based on active tab
   const currentList = activeTab === "matched" ? recommendedJobs : allJobs;
 
-  // Filter list by search term & location
+  // Extract unique locations and experience levels
+  const availableLocations = [...new Set(currentList.map(j => j.location).filter(Boolean))].sort();
+  const availableExpLevels = [...new Set(currentList.map(j => j.expLevel).filter(Boolean))].sort((a, b) => {
+    const numA = parseInt(a);
+    const numB = parseInt(b);
+    return isNaN(numA) || isNaN(numB) ? a.localeCompare(b) : numA - numB;
+  });
+
+  // Filter list by search term, location, and exp level
   const filteredJobs = currentList.filter((j) => {
     const term = searchTerm.toLowerCase().trim();
-    const loc = locationFilter.toLowerCase().trim();
 
     const matchesSearch =
       !term ||
@@ -109,9 +117,10 @@ export default function JobsPage({ embed = false }) {
       j.company.toLowerCase().includes(term) ||
       (j.skills && j.skills.toLowerCase().includes(term));
 
-    const matchesLoc = !loc || (j.location && j.location.toLowerCase().includes(loc));
+    const matchesLoc = !locationFilter || j.location === locationFilter;
+    const matchesExp = !expFilter || j.expLevel === expFilter;
 
-    return matchesSearch && matchesLoc;
+    return matchesSearch && matchesLoc && matchesExp;
   });
 
   // Ensure selectedJob remains valid when list changes
@@ -124,7 +133,7 @@ export default function JobsPage({ embed = false }) {
     } else {
       setSelectedJob(null);
     }
-  }, [activeTab, searchTerm, locationFilter, filteredJobs.length]);
+  }, [activeTab, searchTerm, locationFilter, expFilter, filteredJobs.length]);
 
   async function handleApply(job) {
     if (!isLoggedIn) {
@@ -182,7 +191,7 @@ export default function JobsPage({ embed = false }) {
         >
           <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
             <span style={{ fontSize: 13.5, fontWeight: 700, color: "var(--text-main)" }}>
-              🎯 Your Profile Tech Stack:
+              Your Profile Tech Stack:
             </span>
             {hasSkills ? (
               candidateSkills.map((skill, i) => (
@@ -206,31 +215,46 @@ export default function JobsPage({ embed = false }) {
             className="btn btn-secondary btn-sm"
             onClick={() => navigateTo("/dashboard/profile")}
           >
-            ✏️ {hasSkills ? "Update Skills" : "Add Skills in Profile"}
+            {hasSkills ? "Update Skills" : "Add Skills in Profile"}
           </button>
         </div>
       )}
 
       {/* Search & Location Filter Bar */}
       <Card>
-        <div style={{ display: "grid", gridTemplateColumns: "1.5fr 1fr auto", gap: 12, alignItems: "center" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr 1fr auto", gap: 12, alignItems: "center" }}>
           <div className="input-group" style={{ marginBottom: 0 }}>
             <input
               type="text"
               className="input-field"
-              placeholder="🔍 Search jobs by title, company, or skill (e.g. React, Java, SQL)"
+              placeholder="Search jobs by title, company, or skill..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
           <div className="input-group" style={{ marginBottom: 0 }}>
-            <input
-              type="text"
+            <select
               className="input-field"
-              placeholder="📍 Filter by location (e.g. Bengaluru, Remote, Pune)"
               value={locationFilter}
               onChange={(e) => setLocationFilter(e.target.value)}
-            />
+            >
+              <option value="">All Locations</option>
+              {availableLocations.map(loc => (
+                <option key={loc} value={loc}>{loc}</option>
+              ))}
+            </select>
+          </div>
+          <div className="input-group" style={{ marginBottom: 0 }}>
+            <select
+              className="input-field"
+              value={expFilter}
+              onChange={(e) => setExpFilter(e.target.value)}
+            >
+              <option value="">All Experience Levels</option>
+              {availableExpLevels.map(exp => (
+                <option key={exp} value={exp}>{exp} Years</option>
+              ))}
+            </select>
           </div>
           <button
             type="button"
@@ -238,6 +262,7 @@ export default function JobsPage({ embed = false }) {
             onClick={() => {
               setSearchTerm("");
               setLocationFilter("");
+              setExpFilter("");
             }}
           >
             Reset
@@ -253,14 +278,14 @@ export default function JobsPage({ embed = false }) {
             className={`btn ${activeTab === "matched" ? "btn-primary" : "btn-ghost"}`}
             onClick={() => setActiveTab("matched")}
           >
-            🎯 Matched to My Skills ({recommendedJobs.length})
+            Matched to My Skills ({recommendedJobs.length})
           </button>
           <button
             type="button"
             className={`btn ${activeTab === "all" ? "btn-primary" : "btn-ghost"}`}
             onClick={() => setActiveTab("all")}
           >
-            🌐 All Available Jobs ({allJobs.length})
+            All Available Jobs ({allJobs.length})
           </button>
         </div>
       )}
@@ -318,7 +343,6 @@ export default function JobsPage({ embed = false }) {
               >
                 {activeTab === "matched" && !hasSkills ? (
                   <>
-                    <div style={{ fontSize: 40, marginBottom: 12 }}>🚀</div>
                     <h3 style={{ fontSize: 18, fontWeight: 800, color: "var(--text-main)", marginBottom: 8 }}>
                       Add Your Skills to See Matching Jobs
                     </h3>
@@ -344,7 +368,6 @@ export default function JobsPage({ embed = false }) {
                   </>
                 ) : activeTab === "matched" ? (
                   <>
-                    <div style={{ fontSize: 40, marginBottom: 12 }}>🔍</div>
                     <h3 style={{ fontSize: 18, fontWeight: 800, color: "var(--text-main)", marginBottom: 8 }}>
                       No Jobs Found Matching Your Current Skills
                     </h3>
@@ -371,7 +394,6 @@ export default function JobsPage({ embed = false }) {
                   </>
                 ) : (
                   <>
-                    <div style={{ fontSize: 40, marginBottom: 12 }}>🔎</div>
                     <h3 style={{ fontSize: 18, fontWeight: 800, color: "var(--text-main)", marginBottom: 8 }}>
                       No Jobs Found
                     </h3>
@@ -403,7 +425,7 @@ export default function JobsPage({ embed = false }) {
                     {selectedJob.matchScore != null && (
                       <div style={{ marginBottom: 10 }}>
                         <span className="badge-v2 success" style={{ fontSize: 13, padding: "6px 12px" }}>
-                          🎯 {selectedJob.matchScore}% Profile Skill Match
+                          {selectedJob.matchScore}% Profile Skill Match
                         </span>
                       </div>
                     )}
@@ -411,7 +433,7 @@ export default function JobsPage({ embed = false }) {
                       {selectedJob.title}
                     </h2>
                     <p style={{ fontSize: 14, color: "var(--text-muted)", marginTop: 2 }}>
-                      {selectedJob.company} • 📍 {selectedJob.location}
+                      {selectedJob.company} • {selectedJob.location}
                     </p>
                   </div>
 
@@ -455,7 +477,7 @@ export default function JobsPage({ embed = false }) {
                     {selectedJob.matchedSkills && selectedJob.matchedSkills.length > 0 && (
                       <div style={{ marginBottom: 8 }}>
                         <span style={{ fontSize: 12, fontWeight: 600, color: "var(--success)", display: "block", marginBottom: 4 }}>
-                          ✓ Matching Your Profile Skills:
+                          Matching Your Profile Skills:
                         </span>
                         <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                           {selectedJob.matchedSkills.map((s, i) => (
@@ -504,7 +526,7 @@ export default function JobsPage({ embed = false }) {
                   {selectedJob.aptitudeCutoff && (
                     <div style={{ padding: 12, background: "var(--primary-soft)", borderRadius: "var(--radius-sm)", border: "1px solid var(--primary-light)" }}>
                       <span style={{ fontSize: 12.5, fontWeight: 600, color: "var(--primary)" }}>
-                        🧠 Aptitude Eligibility: Cutoff ≥ {selectedJob.aptitudeCutoff}%
+                        Aptitude Eligibility: Cutoff ≥ {selectedJob.aptitudeCutoff}%
                       </span>
                     </div>
                   )}

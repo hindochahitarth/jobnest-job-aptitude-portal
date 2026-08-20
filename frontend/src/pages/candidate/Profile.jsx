@@ -476,9 +476,14 @@ export default function Profile() {
                         <span className="file-name">✓ {profile.resumeFileName}</span>
                       )}
                     </div>
-                    {resumePreviewUrl && (
-                      <div style={{marginTop:8}}>
-                        <iframe src={resumePreviewUrl} width="100%" height="200" style={{border: "1px solid var(--surface-border)"}} title="Resume Preview" />
+                    {(resumePreviewUrl || profile?.resumeUrl) && (
+                      <div style={{marginTop:8, display: 'flex', flexDirection: 'column', gap: '8px'}}>
+                        <iframe src={resumePreviewUrl || `${BACKEND_BASE}${profile.resumeUrl}`} width="100%" height="400" style={{border: "1px solid var(--surface-border)", borderRadius: "var(--radius-md)"}} title="Resume Preview" />
+                        {!resumePreviewUrl && profile?.resumeUrl && (
+                          <a href={`${BACKEND_BASE}${profile.resumeUrl}`} target="_blank" rel="noopener noreferrer" style={{fontSize: 13, color: 'var(--primary)', textDecoration: 'none', fontWeight: 600}}>
+                            ↗ Open Resume in new tab
+                          </a>
+                        )}
                       </div>
                     )}
                   </div>
@@ -625,7 +630,13 @@ export default function Profile() {
                 </span>
               )}
               {profile?.resumeFileName && (
-                <span className="badge-v2 success"> Resume Uploaded</span>
+                profile?.resumeUrl ? (
+                  <a href={`${BACKEND_BASE}${profile.resumeUrl}`} target="_blank" rel="noopener noreferrer" className="badge-v2 success" style={{ textDecoration: 'none', cursor: 'pointer' }}>
+                    📄 View Resume
+                  </a>
+                ) : (
+                  <span className="badge-v2 success">✓ Resume Uploaded</span>
+                )
               )}
               {completionPct === 100 && (
                 <span className="badge-v2 success">✓ Profile Complete</span>

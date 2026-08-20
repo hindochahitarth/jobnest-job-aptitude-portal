@@ -66,7 +66,26 @@ export async function updateProfile(profileData, token) {
 }
 
 export async function uploadProfileImage(file, token) {
-  return { success: true };
+  const formData = new FormData();
+  formData.append("file", file);
+
+  const headers = {};
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
+
+  const response = await fetch(`${API_URL}/candidate/profile/image`, {
+    method: "POST",
+    headers,
+    body: formData,
+  });
+
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err.message || "Image upload failed");
+  }
+
+  return response.json();
 }
 
 export async function uploadProfileResume(file, token) {
@@ -82,7 +101,7 @@ export async function uploadResume(file, token) {
     headers["Authorization"] = `Bearer ${token}`;
   }
 
-  const response = await fetch(`${API_URL}/candidate/resume/upload`, {
+  const response = await fetch(`${API_URL}/candidate/profile/resume`, {
     method: "POST",
     headers,
     body: formData,
