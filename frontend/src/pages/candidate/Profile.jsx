@@ -11,9 +11,9 @@ const STEPS = [
 ];
 
 const EXPERIENCE_LEVELS = [
-  { value: "ENTRY", label: "Entry Level", icon: "🎓", desc: "0-1 years / Fresher" },
-  { value: "MID", label: "Mid Level", icon: "💼", desc: "2-4 years experience" },
-  { value: "SENIOR", label: "Senior Level", icon: "🚀", desc: "5+ years experience" },
+  { value: "ENTRY", label: "Entry Level", icon: "", desc: "0-1 years / Fresher" },
+  { value: "MID", label: "Mid Level", icon: "", desc: "2-4 years experience" },
+  { value: "SENIOR", label: "Senior Level", icon: "", desc: "5+ years experience" },
 ];
 
 const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:8080/api";
@@ -44,6 +44,7 @@ export default function Profile() {
   const [tagInput, setTagInput] = useState("");
   const [imageFile, setImageFile] = useState(null);
   const [resumeFile, setResumeFile] = useState(null);
+  const[resumePreviewUrl, setResumePreviewUrl] = useState(null);
   const [imageDrag, setImageDrag] = useState(false);
   const [resumeDrag, setResumeDrag] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -151,6 +152,8 @@ export default function Profile() {
       return;
     }
     setResumeFile(file);
+    if(resumePreviewUrl) URL.revokeObjectURL(resumePreviewUrl);
+    setResumePreviewUrl(URL.createObjectURL(file));
   }
 
   function handleDrag(setter) {
@@ -208,9 +211,12 @@ export default function Profile() {
       showToast(err.message || "Failed to save profile", "error");
     } finally {
       setSubmitting(false);
+      if(resumePreviewUrl) {
+        URL.revokeObjectURL(resumePreviewUrl);
+        setResumePreviewUrl(null);
     }
   }
-
+  }
   // Edit mode
   function handleEditProfile() {
     if (profile) {
@@ -227,6 +233,10 @@ export default function Profile() {
     setStep(0);
     setImageFile(null);
     setResumeFile(null);
+    if(resumePreviewUrl) {
+      URL.revokeObjectURL(resumePreviewUrl);
+      setResumePreviewUrl(null);
+    }
     setShowWizard(true);
   }
 
@@ -247,7 +257,7 @@ export default function Profile() {
     return (
       <div style={{ textAlign: "center", padding: 60 }}>
         <p style={{ color: "var(--error)", fontSize: 15, fontWeight: 600, marginBottom: 16 }}>
-          ⚠️ {error}
+          {error}
         </p>
         <button type="button" className="btn btn-primary" onClick={() => window.location.reload()}>
           Retry
@@ -264,7 +274,7 @@ export default function Profile() {
 
         <div className="profile-wizard-card">
           <div className="profile-wizard-header">
-            <h2>✨ Complete Your Profile</h2>
+            <h2>Complete Your Profile</h2>
             <p>Help recruiters find you — fill in your details to get started</p>
           </div>
 
@@ -298,7 +308,7 @@ export default function Profile() {
           <div className="wizard-step-content" key={step}>
             {step === 0 && (
               <>
-                <h3>👤 Basic Information</h3>
+                <h3>Basic Information</h3>
                 <p className="step-subtitle">Tell recruiters who you are</p>
 
                 <div className="input-group">
@@ -341,7 +351,7 @@ export default function Profile() {
 
             {step === 1 && (
               <>
-                <h3>🛠️ Skills & Experience</h3>
+                <h3>Skills & Experience</h3>
                 <p className="step-subtitle">Add your tech stack and experience level</p>
 
                 <div className="input-group">
@@ -378,6 +388,7 @@ export default function Profile() {
                       >
                         <span className="exp-icon">{level.icon}</span>
                         <span className="exp-label">{level.label}</span>
+                        <span className="exp-lable" style={{ fontWeight: 600, dispaly: "block", marginButton: 4 }}>{level.desc}</span>
                         <span className="exp-desc">{level.desc}</span>
                       </div>
                     ))}
@@ -388,7 +399,7 @@ export default function Profile() {
 
             {step === 2 && (
               <>
-                <h3>🔗 Links & Uploads</h3>
+                <h3>Links & Uploads</h3>
                 <p className="step-subtitle">Add your online presence and resume</p>
 
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 20 }}>
@@ -426,8 +437,9 @@ export default function Profile() {
                         accept="image/*"
                         onChange={handleImageChange}
                       />
-                      <span className="drop-icon">📷</span>
-                      <span className="drop-label">
+                      {/* <span className="drop-icon"></span>
+                      <span className="drop-label"> */}
+                      <span className="drop-label" style={{marginTop: 8}}>
                         {imageFile ? "Photo Selected" : profile?.profileImageUrl ? "Change Photo" : "Upload Photo"}
                       </span>
                       <span className="drop-hint">JPEG, PNG, WebP • Max 5 MB</span>
@@ -451,8 +463,9 @@ export default function Profile() {
                         accept=".pdf"
                         onChange={handleResumeChange}
                       />
-                      <span className="drop-icon">📄</span>
-                      <span className="drop-label">
+                      {/* <span className="drop-icon">📄</span>
+                      <span className="drop-label"> */}
+                      <span className="drop-label" style={{marginTop: 8}}>
                         {resumeFile ? "Resume Selected" : profile?.resumeFileName ? "Change Resume" : "Upload Resume"}
                       </span>
                       <span className="drop-hint">PDF only • Max 10 MB</span>
@@ -463,6 +476,11 @@ export default function Profile() {
                         <span className="file-name">✓ {profile.resumeFileName}</span>
                       )}
                     </div>
+                    {resumePreviewUrl && (
+                      <div style={{marginTop:8}}>
+                        <iframe src={resumePreviewUrl} width="100%" height="200" style={{border: "1px solid var(--surface-border)"}} title="Resume Preview" />
+                      </div>
+                    )}
                   </div>
                 </div>
               </>
@@ -470,7 +488,7 @@ export default function Profile() {
 
             {step === 3 && (
               <>
-                <h3>📋 Review Your Profile</h3>
+                <h3>Review Your Profile</h3>
                 <p className="step-subtitle">Confirm your details before saving</p>
 
                 <div className="profile-review-grid">
@@ -524,7 +542,7 @@ export default function Profile() {
                 onClick={handleSubmit}
                 disabled={submitting}
               >
-                {submitting ? "Saving..." : "🚀 Save Profile"}
+                {submitting ? "Saving..." : "Save Profile"}
               </button>
             )}
           </div>
@@ -576,27 +594,27 @@ export default function Profile() {
                   {profile?.headline || "No headline set"}
                 </p>
                 <p style={{ fontSize: 13, color: "var(--text-subtle)", marginTop: 4 }}>
-                  {profile?.location && `📍 ${profile.location} • `}{email}
+                  {profile?.location && ` ${profile.location} • `}{email}
                 </p>
                 {(profile?.githubUrl || profile?.linkedinUrl) && (
                   <div style={{ display: "flex", gap: 12, marginTop: 8, fontSize: 13 }}>
                     {profile.githubUrl && (
                       <a href={profile.githubUrl} target="_blank" rel="noopener noreferrer"
                         style={{ color: "var(--text-muted)", textDecoration: "none" }}>
-                        🔗 GitHub
+                         GitHub
                       </a>
                     )}
                     {profile.linkedinUrl && (
                       <a href={profile.linkedinUrl} target="_blank" rel="noopener noreferrer"
                         style={{ color: "var(--text-muted)", textDecoration: "none" }}>
-                        🔗 LinkedIn
+                        LinkedIn
                       </a>
                     )}
                   </div>
                 )}
               </div>
               <button type="button" className="btn btn-secondary btn-sm" onClick={handleEditProfile}>
-                ✏️ Edit Profile
+                Edit Profile
               </button>
             </div>
 
@@ -607,7 +625,7 @@ export default function Profile() {
                 </span>
               )}
               {profile?.resumeFileName && (
-                <span className="badge-v2 success">📄 Resume Uploaded</span>
+                <span className="badge-v2 success"> Resume Uploaded</span>
               )}
               {completionPct === 100 && (
                 <span className="badge-v2 success">✓ Profile Complete</span>
@@ -617,7 +635,7 @@ export default function Profile() {
         </div>
 
         {/* Profile Strength Meter */}
-        <Card title="Profile Strength" icon="📈">
+        <Card title="Profile Strength" icon="">
           <div className="profile-meter-box">
             <div className="meter-header">
               <span>Overall Completeness</span>
@@ -633,7 +651,7 @@ export default function Profile() {
             )}
             {completionPct === 100 && (
               <p className="meter-subtext" style={{ color: "var(--success)" }}>
-                🎉 Your profile is 100% complete! You'll get maximum visibility from recruiters.
+                Your profile is 100% complete! You'll get maximum visibility from recruiters.
               </p>
             )}
           </div>
@@ -641,7 +659,7 @@ export default function Profile() {
 
         {/* Tech Stack */}
         {profile?.techStack && profile.techStack.length > 0 && (
-          <Card title="Technical Skills" icon="🧠">
+          <Card title="Technical Skills" icon="">
             <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
               {profile.techStack.map((skill, i) => (
                 <span key={`${skill}-${i}`} className="badge-v2 primary" style={{ padding: "6px 12px", fontSize: 13 }}>
@@ -654,7 +672,7 @@ export default function Profile() {
 
         {/* Bio */}
         {profile?.bio && (
-          <Card title="About" icon="📝">
+          <Card title="About" icon="">
             <p style={{ fontSize: 14, color: "var(--text-muted)", lineHeight: 1.7, whiteSpace: "pre-wrap" }}>
               {profile.bio}
             </p>
@@ -663,7 +681,7 @@ export default function Profile() {
       </div>
 
       <div className="side-col" style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-        <Card title="Next Action Items" icon="🚀">
+        <Card title="Next Action Items" icon="">
           <ul style={{ listStyle: "none", display: "flex", flexDirection: "column", gap: 12, fontSize: 13 }}>
             {!profile?.resumeFileName && (
               <li style={{ padding: 10, background: "var(--bg-subtle)", borderRadius: "var(--radius-sm)" }}>
@@ -685,7 +703,7 @@ export default function Profile() {
             )}
             {completionPct === 100 && (
               <li style={{ padding: 10, background: "var(--success-bg)", borderRadius: "var(--radius-sm)", color: "var(--success)" }}>
-                <strong>🎉 All done!</strong>
+                <strong> All done!</strong>
                 <div style={{ marginTop: 2 }}>Your profile is fully complete</div>
               </li>
             )}
