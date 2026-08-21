@@ -2,22 +2,22 @@ import React from "react";
 
 const features = [
   {
-    icon: "🧠",
+    icon: "",
     title: "AI Resume & Skill Matcher",
     desc: "Our smart parsing engine analyzes your resume against recruiter job descriptions, giving instant match percentages and skill gap highlights.",
   },
   {
-    icon: "⚡",
+    icon: "",
     title: "Verified Aptitude Tests",
     desc: "Prove your analytical, quantitative, and verbal capabilities with industry-aligned aptitude assessments that recruiters trust.",
   },
   {
-    icon: "👔",
+    icon: "",
     title: "Direct Recruiter Access",
     desc: "Get shortlisted faster. Recruiters search our candidate database filtered directly by verified aptitude scores and resume matches.",
   },
   {
-    icon: "📊",
+    icon: "",
     title: "Skill Scorecards & Reports",
     desc: "Comprehensive performance scorecards detailing your strengths, percentile rank, and practice mock tests for interview readiness.",
   },

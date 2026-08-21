@@ -44,10 +44,10 @@ export default function AboutSection() {
           <div style={{ background: "var(--primary-light)", padding: 24, borderRadius: "var(--radius-md)", border: "1px solid var(--primary-soft)" }}>
             <h4 style={{ color: "var(--primary)", fontSize: 16, fontWeight: 700, marginBottom: 12 }}>Platform Highlights</h4>
             <ul style={{ listStyle: "none", display: "flex", flexDirection: "column", gap: 10, fontSize: 14, color: "var(--text-main)" }}>
-              <li>✔️ Verified Aptitude Certifications</li>
-              <li>✔️ Real-time Resume Parsing & Match Scoring</li>
-              <li>✔️ Recruiter Applicant Tracking System (ATS)</li>
-              <li>✔️ AI Guided Interview Readiness</li>
+              <li>- Verified Aptitude Certifications</li>
+              <li>- Real-time Resume Parsing & Match Scoring</li>
+              <li>- Recruiter Applicant Tracking System (ATS)</li>
+              <li>- AI Guided Interview Readiness</li>
             </ul>
           </div>
         </div>

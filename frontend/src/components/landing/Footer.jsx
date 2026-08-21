@@ -1,6 +1,29 @@
 import React from "react";
 
 export default function Footer() {
+  function handleLinkClick(e, href) {
+    e.preventDefault();
+    window.history.pushState({}, "", href);
+    window.dispatchEvent(new PopStateEvent("popstate"));
+
+    const hashIndex = href.indexOf("#");
+    if (hashIndex > -1) {
+      const targetId = href.slice(hashIndex);
+      const target = document.querySelector(targetId);
+      if (target) {
+        setTimeout(() => target.scrollIntoView({ behavior: "smooth", block: "start" }), 60);
+      }
+    }
+  }
+
+  function NavLink({ href, children }) {
+    return (
+      <a href={href} onClick={(e) => handleLinkClick(e, href)}>
+        {children}
+      </a>
+    );
+  }
+
   return (
     <footer className="landing-footer">
       <div className="footer-container">
@@ -13,37 +36,37 @@ export default function Footer() {
           <div className="footer-col">
             <h4>For Candidates</h4>
             <ul>
-              <li><a href="/jobs">Browse Jobs</a></li>
-              <li><a href="/#features">Aptitude Tests</a></li>
-              <li><a href="/dashboard/resume">Resume AI Builder</a></li>
-              <li><a href="/dashboard/interview">Interview Prep</a></li>
+              <li><NavLink href="/jobs">Browse Jobs</NavLink></li>
+              <li><NavLink href="/#features">Aptitude Tests</NavLink></li>
+              <li><NavLink href="/dashboard/resume">Resume AI Builder</NavLink></li>
+              <li><NavLink href="/dashboard/interview">Interview Prep</NavLink></li>
             </ul>
           </div>
 
           <div className="footer-col">
             <h4>For Employers</h4>
             <ul>
-              <li><a href="/dashboard/post-job">Post a Job</a></li>
-              <li><a href="/dashboard/applicants">Candidate Search</a></li>
-              <li><a href="/dashboard/ai-tools">AI Screening Tools</a></li>
-              <li><a href="/#how-it-works">Pricing Plans</a></li>
+              <li><NavLink href="/dashboard/post-job">Post a Job</NavLink></li>
+              <li><NavLink href="/dashboard/applicants">Candidate Search</NavLink></li>
+              <li><NavLink href="/dashboard/ai-tools">AI Screening Tools</NavLink></li>
+              <li><NavLink href="/#how-it-works">Pricing Plans</NavLink></li>
             </ul>
           </div>
 
           <div className="footer-col">
             <h4>Company</h4>
             <ul>
-              <li><a href="/#about">About Us</a></li>
-              <li><a href="/#features">Features</a></li>
-              <li><a href="/#privacy">Privacy Policy</a></li>
-              <li><a href="/#terms">Terms of Service</a></li>
+              <li><NavLink href="/#about">About Us</NavLink></li>
+              <li><NavLink href="/#features">Features</NavLink></li>
+              <li><NavLink href="/#privacy">Privacy Policy</NavLink></li>
+              <li><NavLink href="/#terms">Terms of Service</NavLink></li>
             </ul>
           </div>
         </div>
 
         <div className="footer-bottom">
           <span>© {new Date().getFullYear()} JobNest Inc. All rights reserved.</span>
-          <span>Designed with LinkedIn & Naukri Inspired Corporate UX</span>
+          <span>Designed with Corporate UX</span>
         </div>
       </div>
     </footer>

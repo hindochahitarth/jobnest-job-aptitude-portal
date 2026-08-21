@@ -22,7 +22,7 @@ export default function Hero() {
       <div className="hero-container">
         <div className="hero-header-center">
           <div className="hero-badge-pill">
-            <span>🎯 India's #1 Skill & Aptitude-Verified Job Portal</span>
+            <span>India's #1 Skill & Aptitude-Verified Job Portal</span>
           </div>
 
           <h1 className="hero-title">
@@ -37,7 +37,7 @@ export default function Hero() {
         {/* Naukri / LinkedIn Style Search Widget */}
         <form className="hero-search-widget" onSubmit={handleSearch}>
           <div className="search-field">
-            <span className="field-icon">🔍</span>
+            <span className="field-icon"></span>
             <input
               type="text"
               placeholder="Search by job title, skill, or company (e.g. React, Data Analyst)"
@@ -47,7 +47,7 @@ export default function Hero() {
           </div>
 
           <div className="search-field">
-            <span className="field-icon">📍</span>
+            <span className="field-icon"></span>
             <input
               type="text"
               placeholder="Location (e.g. Remote, Bengaluru)"
@@ -57,7 +57,7 @@ export default function Hero() {
           </div>
 
           <div className="search-field">
-            <span className="field-icon">💼</span>
+            <span className="field-icon"></span>
             <select value={exp} onChange={(e) => setExp(e.target.value)}>
               <option value="0-1">Fresher (0-1 yrs)</option>
               <option value="0-2">Junior (0-2 yrs)</option>
