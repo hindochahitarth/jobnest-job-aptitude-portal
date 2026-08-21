@@ -54,8 +54,9 @@ public record ApplicationResponse(
 
         if (profile != null) {
             resumeFileName = profile.getResumeFileName();
-            if (resumeFileName != null && !resumeFileName.isBlank()) {
-                resumeUrl = baseUploadUrl + "/" + resumeFileName;
+            if (profile.getResumeUrl() != null && !profile.getResumeUrl().isBlank()) {
+                // profile.getResumeUrl() already includes /uploads/...
+                resumeUrl = "http://localhost:8080" + profile.getResumeUrl();
             }
             headline = profile.getHeadline();
             bio = profile.getBio();
