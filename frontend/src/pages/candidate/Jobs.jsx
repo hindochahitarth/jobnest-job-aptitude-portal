@@ -33,9 +33,8 @@ export default function JobsPage({ embed = false }) {
       try {
         if (isLoggedIn && token && user.role === "CANDIDATE") {
           // Fetch candidate profile, jobs, and existing applications in parallel
-          const [profileData, recJobs, allJobsData, myApplications] = await Promise.all([
+          const [profileData, allJobsData, myApplications] = await Promise.all([
             api.getProfile(token).catch(() => null),
-            api.getRecommendedJobs(token).catch(() => []),
             api.getCandidateAllJobs(token).catch(() => []),
             api.getCandidateApplications(token).catch(() => []),
           ]);
@@ -43,8 +42,44 @@ export default function JobsPage({ embed = false }) {
           if (cancelled) return;
 
           setCandidateProfile(profileData);
+
+          const candSkills = profileData?.techStack || [];
+          const normalizedCandSkills = candSkills.map(s => s.toLowerCase().replace(/[^a-z0-9+#]/g, ''));
+          
+          let processedAllJobs = allJobsData;
+          if (normalizedCandSkills.length > 0) {
+            processedAllJobs = allJobsData.map(job => {
+              if (!job.skills) return { ...job, matchScore: null, matchedSkills: [], missingSkills: [] };
+              
+              const requiredSkills = job.skills.split(',').map(s => s.trim()).filter(s => s);
+              const matched = [];
+              const missing = [];
+              
+              requiredSkills.forEach(req => {
+                const reqNorm = req.toLowerCase().replace(/[^a-z0-9+#]/g, '');
+                const isMatch = normalizedCandSkills.some(candNorm => 
+                  reqNorm === candNorm || reqNorm.includes(candNorm) || candNorm.includes(reqNorm)
+                );
+                if (isMatch) matched.push(req);
+                else missing.push(req);
+              });
+              
+              let matchScore = null;
+              if (requiredSkills.length > 0 && matched.length > 0) {
+                const ratio = matched.length / requiredSkills.length;
+                matchScore = Math.round(55 + (ratio * 43));
+                if (matchScore > 98) matchScore = 98;
+              }
+              
+              return { ...job, matchScore, matchedSkills: matched, missingSkills: missing };
+            });
+          }
+
+          const recJobs = processedAllJobs.filter(job => job.matchedSkills && job.matchedSkills.length > 0);
+          recJobs.sort((a, b) => (b.matchScore || 0) - (a.matchScore || 0));
+          
+          setAllJobs(processedAllJobs);
           setRecommendedJobs(recJobs);
-          setAllJobs(allJobsData);
 
           // Restore already-applied state from DB
           if (myApplications && myApplications.length > 0) {

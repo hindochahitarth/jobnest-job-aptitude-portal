@@ -150,7 +150,7 @@ export async function getCandidateAllJobs(token) {
   const headers = {};
   if (token) headers["Authorization"] = `Bearer ${token}`;
   try {
-    const res = await fetch(`${API_URL}/candidate/jobs`, { headers });
+    const res = await fetch(`${API_URL}/candidate/jobs/all`, { headers });
     if (!res.ok) return getFallbackJobs();
     return await res.json();
   } catch (e) {
@@ -160,7 +160,7 @@ export async function getCandidateAllJobs(token) {
 
 export async function getPublicJobs() {
   try {
-    const res = await fetch(`${API_URL}/jobs/public`);
+    const res = await fetch(`${API_URL}/jobs`);
     if (!res.ok) return getFallbackJobs();
     return await res.json();
   } catch (e) {

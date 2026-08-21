@@ -76,10 +76,10 @@ export default function Overview() {
   });
 
   const stats = [
-    { label: "Active Open Roles", value: loading ? "—" : String(jobs.length), icon: "💼" },
-    { label: "Total Applicants", value: loading ? "—" : String(totalApplicants), icon: "👥" },
-    { label: "Aptitude Screened", value: loading ? "—" : String(totalApplicants), icon: "🧠" },
-    { label: "Shortlisted", value: loading ? "—" : String(shortlisted), icon: "⭐" },
+    { label: "Active Open Roles", value: loading ? "—" : String(jobs.length) },
+    { label: "Total Applicants", value: loading ? "—" : String(totalApplicants) },
+    { label: "Aptitude Screened", value: loading ? "—" : String(totalApplicants) },
+    { label: "Shortlisted", value: loading ? "—" : String(shortlisted) },
   ];
 
   const jobColumns = [
@@ -153,9 +153,6 @@ export default function Overview() {
           <p>Manage job postings, review aptitude-screened talent, and accelerate candidate shortlists.</p>
         </div>
         <div className="page-header-actions">
-          <button type="button" className="btn btn-secondary" onClick={() => navigateTo("/dashboard/applicants")}>
-            🔍 Search Talent Pool
-          </button>
           <button type="button" className="btn btn-primary" onClick={() => navigateTo("/dashboard/post-job")}>
             + Post New Job
           </button>
@@ -166,7 +163,7 @@ export default function Overview() {
       <div className="stat-cards-grid-top">
         {stats.map((st) => (
           <div key={st.label} className="stat-card-v2">
-            <div className="stat-icon-wrap">{st.icon}</div>
+            {st.icon && <div className="stat-icon-wrap">{st.icon}</div>}
             <div className="stat-info">
               <div className="stat-value">{st.value}</div>
               <div className="stat-label">{st.label}</div>
@@ -193,7 +190,7 @@ export default function Overview() {
             </div>
           </ChartCard>
 
-          <Card title="Active Open Job Postings" icon="💼">
+          <Card title="Active Open Job Postings">
             {loading ? (
               <div style={{ textAlign: "center", padding: 24, color: "var(--text-muted)", fontSize: 14 }}>
                 <div className="spinner" style={{ margin: "0 auto 10px" }} />
@@ -201,7 +198,6 @@ export default function Overview() {
               </div>
             ) : jobs.length === 0 ? (
               <div style={{ textAlign: "center", padding: 32 }}>
-                <div style={{ fontSize: 36, marginBottom: 10 }}>📋</div>
                 <p style={{ color: "var(--text-muted)", fontSize: 14, marginBottom: 14 }}>
                   You haven't posted any jobs yet.
                 </p>
@@ -221,12 +217,11 @@ export default function Overview() {
 
         {/* Side Column */}
         <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-          <Card title="Top Shortlisted Candidates" icon="⭐">
+          <Card title="Top Shortlisted Candidates">
             {loading ? (
               <div style={{ textAlign: "center", padding: 20, color: "var(--text-muted)", fontSize: 13 }}>Loading...</div>
             ) : topCandidates.length === 0 ? (
               <div style={{ textAlign: "center", padding: 24 }}>
-                <div style={{ fontSize: 32, marginBottom: 8 }}>🔍</div>
                 <p style={{ color: "var(--text-muted)", fontSize: 13 }}>
                   No shortlisted candidates yet.<br />
                   Go to Applicants to review and shortlist.
@@ -273,7 +268,7 @@ export default function Overview() {
             )}
           </Card>
 
-          <Card title="Quick AI Actions" icon="🤖">
+          <Card title="Quick AI Actions">
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
               <button
                 type="button"

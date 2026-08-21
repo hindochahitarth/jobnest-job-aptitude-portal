@@ -1,4 +1,4 @@
-import { useContext } from "react";
+import { useContext, useEffect, useState } from "react";
 import { AuthContext } from "../../context/AuthContext";
 import DashboardLayout from "../../components/layout/DashboardLayout";
 import Overview from "./Overview";
@@ -7,15 +7,7 @@ import Applicants from "./Applicants";
 import Shortlisted from "./Shortlisted";
 import Reports from "./Reports";
 import AITools from "./AITools";
-
-const sidebarItems = [
-  { key: "dash", href: "/dashboard", label: "Hiring Overview", icon: "🏠" },
-  { key: "post", href: "/dashboard/post-job", label: "Post New Job", icon: "✍️" },
-  { key: "applicants", href: "/dashboard/applicants", label: "Applicants ATS", icon: "🧾", badge: "24 New" },
-  { key: "shortlisted", href: "/dashboard/shortlisted", label: "Shortlisted Talent", icon: "⭐" },
-  { key: "reports", href: "/dashboard/reports", label: "Analytics & Reports", icon: "📈" },
-  { key: "ai", href: "/dashboard/ai-tools", label: "AI Screening Suite", icon: "🤖" },
-];
+import * as api from "../../services/api";
 
 function resolveSection(path) {
   if (!path || path === "/" || path === "") return <Overview />;
@@ -36,7 +28,38 @@ function resolveSection(path) {
 }
 
 export default function RecruiterDashboard() {
-  const { user } = useContext(AuthContext);
+  const { user, token } = useContext(AuthContext);
+  const [newApplicantsCount, setNewApplicantsCount] = useState(0);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function fetchApplicants() {
+      if (!token) return;
+      try {
+        const data = await api.getRecruiterApplicants(token);
+        if (!cancelled) {
+          const newCount = data.filter((app) => app.status === "APPLIED").length;
+          setNewApplicantsCount(newCount);
+        }
+      } catch (err) {
+        console.error("Failed to load applicants", err);
+      }
+    }
+    fetchApplicants();
+    return () => {
+      cancelled = true;
+    };
+  }, [token]);
+
+  const sidebarItems = [
+    { key: "dash", href: "/dashboard", label: "Hiring Overview" },
+    { key: "post", href: "/dashboard/post-job", label: "Post New Job" },
+    { key: "applicants", href: "/dashboard/applicants", label: "Applicants ATS", badge: newApplicantsCount > 0 ? `${newApplicantsCount} New` : null },
+    { key: "shortlisted", href: "/dashboard/shortlisted", label: "Shortlisted Talent" },
+    { key: "reports", href: "/dashboard/reports", label: "Analytics & Reports" },
+    { key: "ai", href: "/dashboard/ai-tools", label: "AI Screening Suite" },
+  ];
+
   const currentPath = window.location.pathname.replace("/dashboard", "") || "/";
   const title = user ? `Recruiter Hub — ${user.name || "Hiring Manager"}` : "Recruiter Portal";
 
