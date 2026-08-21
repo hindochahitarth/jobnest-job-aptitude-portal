@@ -13,9 +13,9 @@ export default function JobCard({ job, onApply, showApply = true, isSelected = f
           <h3 className="job-title-v2">{job.title}</h3>
           <p className="company-name-v2">{job.company} • {job.location || "Remote"}</p>
         </div>
-        {match != null && (
+        {showApply && match != null && (
           <div className="match-badge-v2">
-            🎯 {match}% Match
+            {match}% Match
           </div>
         )}
       </div>
@@ -30,10 +30,10 @@ export default function JobCard({ job, onApply, showApply = true, isSelected = f
         <span className="job-tag">Full-Time</span>
         {job.expLevel && <span className="job-tag">Exp: {job.expLevel} yrs</span>}
         {job.aptitudeCutoff && <span className="job-tag">Cutoff: {job.aptitudeCutoff}%</span>}
-        {job.matchedSkills && job.matchedSkills.length > 0 ? (
+        {showApply && job.matchedSkills && job.matchedSkills.length > 0 ? (
           job.matchedSkills.slice(0, 3).map((s, i) => (
             <span key={i} className="job-tag" style={{ background: "var(--success-bg)", color: "var(--success)", borderColor: "var(--success-border)", fontWeight: 600 }}>
-              ✓ {s}
+               {s}
             </span>
           ))
         ) : job.skills ? (

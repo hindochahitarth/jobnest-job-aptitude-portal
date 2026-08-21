@@ -18,9 +18,7 @@ export default function JobsPage({ embed = false }) {
   const [error, setError] = useState(null);
 
   const [activeTab, setActiveTab] = useState("matched"); // 'matched' | 'all'
-  const [searchTerm, setSearchTerm] = useState("");
-  const [locationFilter, setLocationFilter] = useState("");
-  const [expFilter, setExpFilter] = useState("");
+
   const [selectedJob, setSelectedJob] = useState(null);
   const [appliedJobs, setAppliedJobs] = useState({});
   const [toastMessage, setToastMessage] = useState(null);
@@ -99,29 +97,7 @@ export default function JobsPage({ embed = false }) {
   // Determine current list to display based on active tab
   const currentList = activeTab === "matched" ? recommendedJobs : allJobs;
 
-  // Extract unique locations and experience levels
-  const availableLocations = [...new Set(currentList.map(j => j.location).filter(Boolean))].sort();
-  const availableExpLevels = [...new Set(currentList.map(j => j.expLevel).filter(Boolean))].sort((a, b) => {
-    const numA = parseInt(a);
-    const numB = parseInt(b);
-    return isNaN(numA) || isNaN(numB) ? a.localeCompare(b) : numA - numB;
-  });
-
-  // Filter list by search term, location, and exp level
-  const filteredJobs = currentList.filter((j) => {
-    const term = searchTerm.toLowerCase().trim();
-
-    const matchesSearch =
-      !term ||
-      j.title.toLowerCase().includes(term) ||
-      j.company.toLowerCase().includes(term) ||
-      (j.skills && j.skills.toLowerCase().includes(term));
-
-    const matchesLoc = !locationFilter || j.location === locationFilter;
-    const matchesExp = !expFilter || j.expLevel === expFilter;
-
-    return matchesSearch && matchesLoc && matchesExp;
-  });
+  const filteredJobs = currentList;
 
   // Ensure selectedJob remains valid when list changes
   useEffect(() => {
@@ -133,7 +109,7 @@ export default function JobsPage({ embed = false }) {
     } else {
       setSelectedJob(null);
     }
-  }, [activeTab, searchTerm, locationFilter, expFilter, filteredJobs.length]);
+  }, [activeTab, filteredJobs.length]);
 
   async function handleApply(job) {
     if (!isLoggedIn) {
@@ -220,55 +196,7 @@ export default function JobsPage({ embed = false }) {
         </div>
       )}
 
-      {/* Search & Location Filter Bar */}
-      <Card>
-        <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr 1fr auto", gap: 12, alignItems: "center" }}>
-          <div className="input-group" style={{ marginBottom: 0 }}>
-            <input
-              type="text"
-              className="input-field"
-              placeholder="Search jobs by title, company, or skill..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-          </div>
-          <div className="input-group" style={{ marginBottom: 0 }}>
-            <select
-              className="input-field"
-              value={locationFilter}
-              onChange={(e) => setLocationFilter(e.target.value)}
-            >
-              <option value="">All Locations</option>
-              {availableLocations.map(loc => (
-                <option key={loc} value={loc}>{loc}</option>
-              ))}
-            </select>
-          </div>
-          <div className="input-group" style={{ marginBottom: 0 }}>
-            <select
-              className="input-field"
-              value={expFilter}
-              onChange={(e) => setExpFilter(e.target.value)}
-            >
-              <option value="">All Experience Levels</option>
-              {availableExpLevels.map(exp => (
-                <option key={exp} value={exp}>{exp} Years</option>
-              ))}
-            </select>
-          </div>
-          <button
-            type="button"
-            className="btn btn-secondary"
-            onClick={() => {
-              setSearchTerm("");
-              setLocationFilter("");
-              setExpFilter("");
-            }}
-          >
-            Reset
-          </button>
-        </div>
-      </Card>
+
 
       {/* Tabs Selector for Candidates */}
       {isLoggedIn && user?.role === "CANDIDATE" && (
@@ -294,7 +222,9 @@ export default function JobsPage({ embed = false }) {
       {loading && (
         <div className="profile-loading">
           <div className="spinner" />
-          <span style={{ fontSize: 14, color: "var(--text-muted)" }}>Finding matching job opportunities...</span>
+          <span style={{ fontSize: 14, color: "var(--text-muted)" }}>
+            {isLoggedIn ? "Finding matching job opportunities..." : "Loading available jobs..."}
+          </span>
         </div>
       )}
 
@@ -398,18 +328,8 @@ export default function JobsPage({ embed = false }) {
                       No Jobs Found
                     </h3>
                     <p style={{ fontSize: 14, color: "var(--text-muted)", marginBottom: 16 }}>
-                      No jobs matched your filter criteria: "{searchTerm || locationFilter}". Try clearing your filters.
+                      There are currently no jobs available. Please check back later!
                     </p>
-                    <button
-                      type="button"
-                      className="btn btn-secondary"
-                      onClick={() => {
-                        setSearchTerm("");
-                        setLocationFilter("");
-                      }}
-                    >
-                      Clear Filters
-                    </button>
                   </>
                 )}
               </div>
@@ -422,7 +342,7 @@ export default function JobsPage({ embed = false }) {
               <Card>
                 <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
                   <div>
-                    {selectedJob.matchScore != null && (
+                    {isLoggedIn && user?.role === "CANDIDATE" && selectedJob.matchScore != null && (
                       <div style={{ marginBottom: 10 }}>
                         <span className="badge-v2 success" style={{ fontSize: 13, padding: "6px 12px" }}>
                           {selectedJob.matchScore}% Profile Skill Match
@@ -470,48 +390,67 @@ export default function JobsPage({ embed = false }) {
 
                   {/* Skills Match Breakdown */}
                   <div>
-                    <h4 style={{ fontSize: 14, fontWeight: 700, marginBottom: 8, color: "var(--text-main)" }}>
-                      Required Skills & Matching Analysis
-                    </h4>
+                    {isLoggedIn && user?.role === "CANDIDATE" ? (
+                      <>
+                        <h4 style={{ fontSize: 14, fontWeight: 700, marginBottom: 8, color: "var(--text-main)" }}>
+                          Required Skills & Matching Analysis
+                        </h4>
 
-                    {selectedJob.matchedSkills && selectedJob.matchedSkills.length > 0 && (
-                      <div style={{ marginBottom: 8 }}>
-                        <span style={{ fontSize: 12, fontWeight: 600, color: "var(--success)", display: "block", marginBottom: 4 }}>
-                          Matching Your Profile Skills:
-                        </span>
-                        <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                          {selectedJob.matchedSkills.map((s, i) => (
-                            <span key={i} className="badge-v2 success" style={{ fontSize: 12 }}>
-                              ✓ {s}
+                        {selectedJob.matchedSkills && selectedJob.matchedSkills.length > 0 && (
+                          <div style={{ marginBottom: 8 }}>
+                            <span style={{ fontSize: 12, fontWeight: 600, color: "var(--success)", display: "block", marginBottom: 4 }}>
+                              Matching Your Profile Skills:
                             </span>
-                          ))}
-                        </div>
-                      </div>
-                    )}
+                            <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                              {selectedJob.matchedSkills.map((s, i) => (
+                                <span key={i} className="badge-v2 success" style={{ fontSize: 12 }}>
+                                  ✓ {s}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        )}
 
-                    {selectedJob.missingSkills && selectedJob.missingSkills.length > 0 && (
-                      <div style={{ marginBottom: 8 }}>
-                        <span style={{ fontSize: 12, fontWeight: 600, color: "var(--text-subtle)", display: "block", marginBottom: 4 }}>
-                          Other Required Skills:
-                        </span>
-                        <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                          {selectedJob.missingSkills.map((s, i) => (
-                            <span key={i} className="badge-v2 neutral" style={{ fontSize: 12 }}>
-                              {s}
+                        {selectedJob.missingSkills && selectedJob.missingSkills.length > 0 && (
+                          <div style={{ marginBottom: 8 }}>
+                            <span style={{ fontSize: 12, fontWeight: 600, color: "var(--text-subtle)", display: "block", marginBottom: 4 }}>
+                              Other Required Skills:
                             </span>
-                          ))}
-                        </div>
-                      </div>
-                    )}
+                            <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                              {selectedJob.missingSkills.map((s, i) => (
+                                <span key={i} className="badge-v2 neutral" style={{ fontSize: 12 }}>
+                                  {s}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        )}
 
-                    {!selectedJob.matchedSkills && selectedJob.skills && (
-                      <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                        {selectedJob.skills.split(",").map((s, i) => (
-                          <span key={i} className="badge-v2 primary" style={{ fontSize: 12 }}>
-                            {s.trim()}
-                          </span>
-                        ))}
-                      </div>
+                        {!selectedJob.matchedSkills && selectedJob.skills && (
+                          <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                            {selectedJob.skills.split(",").map((s, i) => (
+                              <span key={i} className="badge-v2 primary" style={{ fontSize: 12 }}>
+                                {s.trim()}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                      </>
+                    ) : (
+                      <>
+                        <h4 style={{ fontSize: 14, fontWeight: 700, marginBottom: 8, color: "var(--text-main)" }}>
+                          Required Skills
+                        </h4>
+                        {selectedJob.skills && (
+                          <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                            {selectedJob.skills.split(",").map((s, i) => (
+                              <span key={i} className="badge-v2 primary" style={{ fontSize: 12 }}>
+                                {s.trim()}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                      </>
                     )}
                   </div>
 

@@ -1,21 +1,7 @@
 import React, { useState } from "react";
 
 export default function Hero() {
-  const [role, setRole] = useState("");
-  const [location, setLocation] = useState("");
-  const [exp, setExp] = useState("0-2");
 
-  function handleSearch(e) {
-    e.preventDefault();
-    window.history.pushState({}, "", `/jobs?q=${encodeURIComponent(role)}&loc=${encodeURIComponent(location)}`);
-    window.dispatchEvent(new PopStateEvent("popstate"));
-  }
-
-  function handleTrendingClick(tag) {
-    setRole(tag);
-    window.history.pushState({}, "", `/jobs?q=${encodeURIComponent(tag)}`);
-    window.dispatchEvent(new PopStateEvent("popstate"));
-  }
 
   return (
     <section className="landing-hero">
@@ -34,56 +20,7 @@ export default function Hero() {
           </p>
         </div>
 
-        {/* Naukri / LinkedIn Style Search Widget */}
-        <form className="hero-search-widget" onSubmit={handleSearch}>
-          <div className="search-field">
-            <span className="field-icon"></span>
-            <input
-              type="text"
-              placeholder="Search by job title, skill, or company (e.g. React, Data Analyst)"
-              value={role}
-              onChange={(e) => setRole(e.target.value)}
-            />
-          </div>
 
-          <div className="search-field">
-            <span className="field-icon"></span>
-            <input
-              type="text"
-              placeholder="Location (e.g. Remote, Bengaluru)"
-              value={location}
-              onChange={(e) => setLocation(e.target.value)}
-            />
-          </div>
-
-          <div className="search-field">
-            <span className="field-icon"></span>
-            <select value={exp} onChange={(e) => setExp(e.target.value)}>
-              <option value="0-1">Fresher (0-1 yrs)</option>
-              <option value="0-2">Junior (0-2 yrs)</option>
-              <option value="2-5">Mid Level (2-5 yrs)</option>
-              <option value="5+">Senior (5+ yrs)</option>
-            </select>
-          </div>
-
-          <button type="submit" className="btn btn-primary btn-lg">
-            Search Jobs
-          </button>
-        </form>
-
-        <div className="trending-searches">
-          <span>Trending Searches:</span>
-          {["Full Stack Developer", "Data Analyst", "Aptitude Practice", "Frontend SDE", "Remote Jobs"].map((tag) => (
-            <button
-              key={tag}
-              type="button"
-              className="trending-pill"
-              onClick={() => handleTrendingClick(tag)}
-            >
-              {tag}
-            </button>
-          ))}
-        </div>
 
         {/* Stat Counter Banner */}
         <div className="hero-stats-banner">
