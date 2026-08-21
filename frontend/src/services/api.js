@@ -225,6 +225,29 @@ export async function postRecruiterJob(jobData, token) {
   return res.json();
 }
 
+export async function deleteRecruiterJob(jobId, token) {
+  const headers = {};
+  if (token) headers["Authorization"] = `Bearer ${token}`;
+  const res = await fetch(`${API_URL}/recruiter/jobs/${jobId}`, {
+    method: "DELETE",
+    headers,
+  });
+  if (!res.ok) throw new Error("Failed to delete job");
+  return res.json();
+}
+
+export async function updateRecruiterJobStatus(jobId, status, token) {
+  const headers = { "Content-Type": "application/json" };
+  if (token) headers["Authorization"] = `Bearer ${token}`;
+  const res = await fetch(`${API_URL}/recruiter/jobs/${jobId}/status`, {
+    method: "PATCH",
+    headers,
+    body: JSON.stringify({ status }),
+  });
+  if (!res.ok) throw new Error("Failed to update job status");
+  return res.json();
+}
+
 export async function getRecruiterApplicants(token) {
   const headers = {};
   if (token) headers["Authorization"] = `Bearer ${token}`;

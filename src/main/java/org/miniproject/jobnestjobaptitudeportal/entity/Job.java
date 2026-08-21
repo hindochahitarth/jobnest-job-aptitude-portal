@@ -39,6 +39,9 @@ public class Job {
 
     private String deadline;
 
+    @Column(nullable = false)
+    private String status = "ACTIVE";
+
     @Column(nullable = false, updatable = false)
     private Instant createdAt;
 
@@ -159,5 +162,13 @@ public class Job {
 
     public void setCreatedAt(Instant createdAt) {
         this.createdAt = createdAt;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
     }
 }

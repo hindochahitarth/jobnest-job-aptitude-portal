@@ -22,7 +22,8 @@ public record JobResponse(
         Instant createdAt,
         Integer matchScore,
         List<String> matchedSkills,
-        List<String> missingSkills
+        List<String> missingSkills,
+        String status
 ) {
     public static JobResponse from(Job job, Integer matchScore, List<String> matchedSkills, List<String> missingSkills) {
         List<String> parsedSkills = Collections.emptyList();
@@ -49,7 +50,8 @@ public record JobResponse(
                 job.getCreatedAt(),
                 matchScore,
                 matchedSkills != null ? matchedSkills : Collections.emptyList(),
-                missingSkills != null ? missingSkills : Collections.emptyList()
+                missingSkills != null ? missingSkills : Collections.emptyList(),
+                job.getStatus()
         );
     }
 }

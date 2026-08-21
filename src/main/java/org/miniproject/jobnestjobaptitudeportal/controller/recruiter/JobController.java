@@ -50,6 +50,22 @@ public class JobController {
         return jobService.getJobsByRecruiter(recruiterId);
     }
 
+    /** DELETE /api/recruiter/jobs/{id} — delete a job */
+    @org.springframework.web.bind.annotation.DeleteMapping("/jobs/{id}")
+    public Map<String, Boolean> deleteJob(Authentication authentication, @PathVariable Long id) {
+        Long recruiterId = resolveUserId(authentication);
+        jobService.deleteJob(id, recruiterId);
+        return Map.of("success", true);
+    }
+
+    /** PATCH /api/recruiter/jobs/{id}/status — update job status */
+    @PatchMapping("/jobs/{id}/status")
+    public JobResponse updateJobStatus(Authentication authentication, @PathVariable Long id, @RequestBody Map<String, String> body) {
+        Long recruiterId = resolveUserId(authentication);
+        String status = body.getOrDefault("status", "ACTIVE");
+        return jobService.updateJobStatus(id, status, recruiterId);
+    }
+
     /** GET /api/recruiter/applicants — all candidates who applied to this recruiter's jobs */
     @GetMapping("/applicants")
     public List<ApplicationResponse> getApplicants(Authentication authentication) {

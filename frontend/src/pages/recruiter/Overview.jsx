@@ -46,6 +46,25 @@ export default function Overview() {
     return () => { cancelled = true; };
   }, [token]);
 
+  async function handleDeleteJob(jobId) {
+    if (!window.confirm("Are you sure you want to delete this job?")) return;
+    try {
+      await api.deleteRecruiterJob(jobId, token);
+      setJobs((prev) => prev.filter((j) => j.id !== jobId));
+    } catch (err) {
+      alert("Failed to delete job: " + err.message);
+    }
+  }
+
+  async function handleUpdateJobStatus(jobId, newStatus) {
+    try {
+      const updatedJob = await api.updateRecruiterJobStatus(jobId, newStatus, token);
+      setJobs((prev) => prev.map((j) => (j.id === jobId ? { ...j, status: updatedJob.status } : j)));
+    } catch (err) {
+      alert("Failed to update status: " + err.message);
+    }
+  }
+
   // Derive stats from real data
   const totalApplicants = applicants.length;
   const shortlisted = applicants.filter((a) => a.status === "SHORTLISTED").length;
@@ -82,16 +101,41 @@ export default function Overview() {
     {
       key: "status",
       label: "Status",
-      render: () => <span className="badge-v2 success">Active</span>,
+      render: (r) => {
+        const status = r.status || "ACTIVE";
+        const badgeClass = status === "ACTIVE" ? "success" : "neutral";
+        return <span className={`badge-v2 ${badgeClass}`}>{status}</span>;
+      },
     },
     {
       key: "action",
       label: "Action",
-      render: () => (
-        <button className="btn btn-secondary btn-sm" onClick={() => navigateTo("/dashboard/applicants")}>
-          View ATS
-        </button>
-      ),
+      render: (r) => {
+        const isActive = (r.status || "ACTIVE") === "ACTIVE";
+        return (
+          <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+            <button className="btn btn-secondary btn-sm" onClick={() => navigateTo("/dashboard/applicants")}>
+              View ATS
+            </button>
+            {isActive && (
+              <button
+                className="btn btn-secondary btn-sm"
+                onClick={() => handleUpdateJobStatus(r.id, "FILLED")}
+                style={{ borderColor: "var(--success)", color: "var(--success)" }}
+              >
+                Mark Filled
+              </button>
+            )}
+            <button
+              className="btn btn-ghost btn-sm"
+              onClick={() => handleDeleteJob(r.id)}
+              style={{ color: "var(--error)", padding: "4px 8px" }}
+            >
+              Delete
+            </button>
+          </div>
+        );
+      },
     },
   ];
 

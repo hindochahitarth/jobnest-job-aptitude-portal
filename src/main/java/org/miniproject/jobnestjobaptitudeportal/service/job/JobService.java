@@ -53,6 +53,7 @@ public class JobService {
         List<String> candidateSkills = getCandidateSkills(candidateUserId);
 
         return allJobs.stream()
+                .filter(job -> "ACTIVE".equalsIgnoreCase(job.getStatus()))
                 .filter(job -> matchesFilter(job, search, location))
                 .map(job -> buildJobResponse(job, candidateSkills))
                 .toList();
@@ -68,6 +69,8 @@ public class JobService {
         List<JobResponse> matchedList = new ArrayList<>();
 
         for (Job job : allJobs) {
+            if (!"ACTIVE".equalsIgnoreCase(job.getStatus())) continue;
+
             JobResponse response = buildJobResponse(job, candidateSkills);
             if (response.matchedSkills() != null && !response.matchedSkills().isEmpty()) {
                 matchedList.add(response);
@@ -108,6 +111,29 @@ public class JobService {
                 .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Job not found with ID: " + id));
         List<String> candidateSkills = getCandidateSkills(candidateUserId);
         return buildJobResponse(job, candidateSkills);
+    }
+
+    @Transactional
+    public void deleteJob(Long jobId, Long recruiterId) {
+        Job job = jobRepository.findById(jobId)
+                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Job not found"));
+        if (!job.getRecruiterId().equals(recruiterId)) {
+            throw new ApiException(HttpStatus.FORBIDDEN, "You can only manage your own jobs");
+        }
+        jobRepository.delete(job);
+    }
+
+    @Transactional
+    public JobResponse updateJobStatus(Long jobId, String status, Long recruiterId) {
+        Job job = jobRepository.findById(jobId)
+                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Job not found"));
+        if (!job.getRecruiterId().equals(recruiterId)) {
+            throw new ApiException(HttpStatus.FORBIDDEN, "You can only manage your own jobs");
+        }
+        String normalized = status != null ? status.toUpperCase(Locale.ROOT) : "ACTIVE";
+        job.setStatus(normalized);
+        Job saved = jobRepository.save(job);
+        return JobResponse.from(saved, null, Collections.emptyList(), Collections.emptyList());
     }
 
     // ── Application: Candidate ────────────────────────────────────────────────
