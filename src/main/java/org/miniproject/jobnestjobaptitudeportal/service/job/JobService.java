@@ -58,7 +58,7 @@ public class JobService {
                 .map(job -> buildJobResponse(job, candidateSkills))
                 .toList();
     }
-
+    // Get recommended jobs for candidates
     public List<JobResponse> getRecommendedJobsForCandidate(Long candidateUserId) {
         List<String> candidateSkills = getCandidateSkills(candidateUserId);
         if (candidateSkills.isEmpty()) {
@@ -80,7 +80,7 @@ public class JobService {
         matchedList.sort(Comparator.comparingInt(JobResponse::matchScore).reversed());
         return matchedList;
     }
-
+    //create job
     @Transactional
     public JobResponse createJob(Long recruiterId, JobPostRequest request) {
         Job job = new Job(
@@ -99,13 +99,14 @@ public class JobService {
         Job saved = jobRepository.save(job);
         return JobResponse.from(saved, null, Collections.emptyList(), Collections.emptyList());
     }
-
+    //get jobs by recruiter
     public List<JobResponse> getJobsByRecruiter(Long recruiterId) {
         return jobRepository.findByRecruiterId(recruiterId).stream()
                 .map(job -> JobResponse.from(job, null, Collections.emptyList(), Collections.emptyList()))
                 .toList();
     }
 
+    //get jobs by id
     public JobResponse getJobById(Long id, Long candidateUserId) {
         Job job = jobRepository.findById(id)
                 .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Job not found with ID: " + id));
