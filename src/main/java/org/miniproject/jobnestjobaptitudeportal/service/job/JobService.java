@@ -36,6 +36,7 @@ public class JobService {
     private final ApplicationRepository applicationRepository;
     private final UserRepository userRepository;
 
+    // Set up repositories needed by this service
     public JobService(JobRepository jobRepository,
                       CandidateProfileRepository profileRepository,
                       ApplicationRepository applicationRepository,
@@ -46,8 +47,7 @@ public class JobService {
         this.userRepository = userRepository;
     }
 
-    // ── Job Queries ───────────────────────────────────────────────────────────
-
+    // Fetch active jobs matching given search filters
     public List<JobResponse> getAllJobs(String search, String location, Long candidateUserId) {
         List<Job> allJobs = jobRepository.findAllByOrderByCreatedAtDesc();
         List<String> candidateSkills = getCandidateSkills(candidateUserId);
@@ -58,7 +58,8 @@ public class JobService {
                 .map(job -> buildJobResponse(job, candidateSkills))
                 .toList();
     }
-    // Get recommended jobs for candidates
+
+    // Find jobs that match candidate skills
     public List<JobResponse> getRecommendedJobsForCandidate(Long candidateUserId) {
         List<String> candidateSkills = getCandidateSkills(candidateUserId);
         if (candidateSkills.isEmpty()) {
@@ -80,7 +81,8 @@ public class JobService {
         matchedList.sort(Comparator.comparingInt(JobResponse::matchScore).reversed());
         return matchedList;
     }
-    //create job
+
+    // Create and save a new job posting
     @Transactional
     public JobResponse createJob(Long recruiterId, JobPostRequest request) {
         Job job = new Job(
@@ -99,14 +101,15 @@ public class JobService {
         Job saved = jobRepository.save(job);
         return JobResponse.from(saved, null, Collections.emptyList(), Collections.emptyList());
     }
-    //get jobs by recruiter
+
+    // Get all jobs posted by specific recruiter
     public List<JobResponse> getJobsByRecruiter(Long recruiterId) {
         return jobRepository.findByRecruiterId(recruiterId).stream()
                 .map(job -> JobResponse.from(job, null, Collections.emptyList(), Collections.emptyList()))
                 .toList();
     }
 
-    //get jobs by id
+    // Find one job and prepare its response
     public JobResponse getJobById(Long id, Long candidateUserId) {
         Job job = jobRepository.findById(id)
                 .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Job not found with ID: " + id));
@@ -114,6 +117,7 @@ public class JobService {
         return buildJobResponse(job, candidateSkills);
     }
 
+    // Delete a job owned by recruiter
     @Transactional
     public void deleteJob(Long jobId, Long recruiterId) {
         Job job = jobRepository.findById(jobId)
@@ -124,6 +128,7 @@ public class JobService {
         jobRepository.delete(job);
     }
 
+    // Update job status after checking recruiter
     @Transactional
     public JobResponse updateJobStatus(Long jobId, String status, Long recruiterId) {
         Job job = jobRepository.findById(jobId)
@@ -137,8 +142,7 @@ public class JobService {
         return JobResponse.from(saved, null, Collections.emptyList(), Collections.emptyList());
     }
 
-    // ── Application: Candidate ────────────────────────────────────────────────
-
+    // Apply candidate to selected job posting
     @Transactional
     public ApplicationResponse applyToJob(Long candidateUserId, Long jobId) {
         Job job = jobRepository.findById(jobId)
@@ -153,6 +157,7 @@ public class JobService {
         return ApplicationResponse.forCandidate(saved, job.getTitle(), job.getCompany());
     }
 
+    // Get all applications submitted by candidate
     public List<ApplicationResponse> getApplicationsForCandidate(Long candidateUserId) {
         List<Application> applications = applicationRepository.findByCandidateUserId(candidateUserId);
         if (applications.isEmpty()) return Collections.emptyList();
@@ -171,8 +176,7 @@ public class JobService {
                 .toList();
     }
 
-    // ── Application: Recruiter ────────────────────────────────────────────────
-
+    // Get applications received for recruiter's jobs
     public List<ApplicationResponse> getApplicationsByRecruiter(Long recruiterId) {
         List<Job> myJobs = jobRepository.findByRecruiterId(recruiterId);
         if (myJobs.isEmpty()) return Collections.emptyList();
@@ -207,6 +211,7 @@ public class JobService {
                 .toList();
     }
 
+    // Change application status after recruiter verification
     @Transactional
     public ApplicationResponse updateApplicationStatus(Long applicationId, String status, Long recruiterId) {
         Application application = applicationRepository.findById(applicationId)
@@ -236,8 +241,7 @@ public class JobService {
                 profile, BASE_UPLOAD_URL);
     }
 
-    // ── Private Helpers ───────────────────────────────────────────────────────
-
+    // Get candidate skills from their saved profile
     private List<String> getCandidateSkills(Long candidateUserId) {
         if (candidateUserId == null) return Collections.emptyList();
 
@@ -252,6 +256,7 @@ public class JobService {
                 .toList();
     }
 
+    // Build job response with matching skill details
     private JobResponse buildJobResponse(Job job, List<String> candidateSkills) {
         if (candidateSkills.isEmpty() || job.getSkills() == null || job.getSkills().isBlank()) {
             return JobResponse.from(job, null, Collections.emptyList(), Collections.emptyList());
@@ -283,6 +288,7 @@ public class JobService {
         return JobResponse.from(job, matchScore, matched, missing);
     }
 
+    // Check whether required skill matches candidate
     private boolean isSkillMatched(String requiredSkill, List<String> candidateSkills) {
         String reqNorm = normalizeSkill(requiredSkill);
         for (String candidateSkill : candidateSkills) {
@@ -294,6 +300,7 @@ public class JobService {
         return false;
     }
 
+    // Clean skill text for easier comparison
     private String normalizeSkill(String skill) {
         return skill.toLowerCase(Locale.ROOT)
                 .replaceAll("\\.js$", "")
@@ -301,6 +308,7 @@ public class JobService {
                 .trim();
     }
 
+    // Check whether job matches search filters
     private boolean matchesFilter(Job job, String search, String location) {
         if (search != null && !search.isBlank()) {
             String q = search.toLowerCase(Locale.ROOT).trim();
