@@ -22,6 +22,7 @@ public class ResumeParsingService {
             "C++", "HTML", "CSS", "AWS", "Agile"
     );
 
+    // Parse resume and prepare candidate details
     public ParsedResumeResponse parseResume(MultipartFile file, Long resumeId, String storedPath) {
         String rawText = extractRawText(file);
         String textLower = rawText.toLowerCase(Locale.ROOT);
@@ -68,6 +69,7 @@ public class ResumeParsingService {
         );
     }
 
+    // Read resume file and get its text content
     private String extractRawText(MultipartFile file) {
         try (InputStream is = file.getInputStream()) {
             byte[] bytes = is.readAllBytes();
@@ -78,6 +80,7 @@ public class ResumeParsingService {
         }
     }
 
+    // Find and return the email from resume text
     private String extractEmail(String text) {
         Pattern pattern = Pattern.compile("[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,6}");
         Matcher matcher = pattern.matcher(text);
