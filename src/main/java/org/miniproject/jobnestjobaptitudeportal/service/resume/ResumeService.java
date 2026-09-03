@@ -1,3 +1,4 @@
+
 package org.miniproject.jobnestjobaptitudeportal.service.resume;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -27,6 +28,7 @@ public class ResumeService {
         this.objectMapper = objectMapper;
     }
 
+    // Uploads the resume, stores it, parses its content, and saves the parsed data.
     @Transactional
     public ParsedResumeResponse uploadAndParseResume(Long userId, MultipartFile file) {
         String storedPath = storageService.storeFile(file);
@@ -52,6 +54,7 @@ public class ResumeService {
         return parsed;
     }
 
+    // Retrieves the latest uploaded resume and returns its parsed information.
     public ParsedResumeResponse getLatestResume(Long userId) {
         Resume resume = resumeRepository.findTopByUserIdOrderByUploadedAtDesc(userId)
                 .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "No uploaded resume found for candidate"));
