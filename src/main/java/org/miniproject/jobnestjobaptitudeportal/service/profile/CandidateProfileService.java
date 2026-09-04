@@ -1,3 +1,4 @@
+
 package org.miniproject.jobnestjobaptitudeportal.service.profile;
 
 import java.io.IOException;
@@ -30,11 +31,13 @@ public class CandidateProfileService {
     private final CandidateProfileRepository profileRepository;
     private final UserRepository userRepository;
 
+    // Creates the service with the required repositories.
     public CandidateProfileService(CandidateProfileRepository profileRepository, UserRepository userRepository) {
         this.profileRepository = profileRepository;
         this.userRepository = userRepository;
     }
 
+    // Gets the user's profile or creates a new profile if one does not exist.
     public CandidateProfileResponse getProfile(Long userId) {
         User user = findUser(userId);
         CandidateProfile profile = profileRepository.findByUserId(userId)
@@ -45,6 +48,7 @@ public class CandidateProfileService {
         return CandidateProfileResponse.from(profile, user);
     }
 
+    // Updates the profile fields provided by the user.
     @Transactional
     public CandidateProfileResponse updateProfile(Long userId, ProfileUpdateRequest request) {
         User user = findUser(userId);
@@ -92,7 +96,7 @@ public class CandidateProfileService {
             profile.setLinkedinUrl(url);
         }
 
-        // Mark profile as completed if essential fields are filled
+        // Mark profile as completed if essential fields are filled.
         boolean hasEssentials = profile.getHeadline() != null && !profile.getHeadline().isBlank()
                 && profile.getTechStack() != null && !profile.getTechStack().isBlank()
                 && profile.getExperienceLevel() != null && !profile.getExperienceLevel().isBlank();
@@ -102,6 +106,7 @@ public class CandidateProfileService {
         return CandidateProfileResponse.from(saved, user);
     }
 
+    // Validates and saves the user's profile image.
     @Transactional
     public CandidateProfileResponse uploadProfileImage(Long userId, MultipartFile file) {
         User user = findUser(userId);
@@ -120,6 +125,7 @@ public class CandidateProfileService {
         return CandidateProfileResponse.from(saved, user);
     }
 
+    // Validates and saves the user's resume file.
     @Transactional
     public CandidateProfileResponse uploadResume(Long userId, MultipartFile file) {
         User user = findUser(userId);
@@ -138,11 +144,13 @@ public class CandidateProfileService {
         return CandidateProfileResponse.from(saved, user);
     }
 
+    // Finds a user by their ID or throws an error if the user does not exist.
     private User findUser(Long userId) {
         return userRepository.findById(userId)
                 .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "User not found"));
     }
 
+    // Validates the uploaded profile image for size and file type.
     private void validateImageFile(MultipartFile file) {
         if (file == null || file.isEmpty()) {
             throw new ApiException(HttpStatus.BAD_REQUEST, "Image file is required");
@@ -156,6 +164,7 @@ public class CandidateProfileService {
         }
     }
 
+    // Validates the uploaded resume to ensure it is a PDF and within the size limit.
     private void validateResumeFile(MultipartFile file) {
         if (file == null || file.isEmpty()) {
             throw new ApiException(HttpStatus.BAD_REQUEST, "Resume file is required");
@@ -169,6 +178,7 @@ public class CandidateProfileService {
         }
     }
 
+    // Creates the upload directory and saves the file with a unique file name.
     private String saveFile(MultipartFile file, String subDir, Long userId) {
         try {
             Path uploadPath = Paths.get(UPLOADS_DIR, subDir);
