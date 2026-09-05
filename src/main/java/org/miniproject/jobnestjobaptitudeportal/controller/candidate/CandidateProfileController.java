@@ -25,17 +25,20 @@ public class CandidateProfileController {
     private final CandidateProfileService profileService;
     private final UserRepository userRepository;
 
+    // Constructor injection for the required dependencies.
     public CandidateProfileController(CandidateProfileService profileService, UserRepository userRepository) {
         this.profileService = profileService;
         this.userRepository = userRepository;
     }
 
+    // Retrieves the profile of the currently authenticated candidate.
     @GetMapping
     public CandidateProfileResponse getProfile(Authentication authentication) {
         Long userId = resolveUserId(authentication);
         return profileService.getProfile(userId);
     }
 
+    // Updates the profile details of the currently authenticated candidate.
     @PutMapping
     public CandidateProfileResponse updateProfile(
             Authentication authentication,
@@ -45,6 +48,7 @@ public class CandidateProfileController {
         return profileService.updateProfile(userId, request);
     }
 
+    // Uploads or replaces the profile image of the authenticated candidate.
     @PostMapping("/image")
     public CandidateProfileResponse uploadProfileImage(
             Authentication authentication,
@@ -54,6 +58,7 @@ public class CandidateProfileController {
         return profileService.uploadProfileImage(userId, file);
     }
 
+    // Uploads or replaces the resume of the authenticated candidate.
     @PostMapping("/resume")
     public CandidateProfileResponse uploadResume(
             Authentication authentication,
@@ -63,18 +68,25 @@ public class CandidateProfileController {
         return profileService.uploadResume(userId, file);
     }
 
+    // Resolves the logged-in user's ID from the authentication information.
     private Long resolveUserId(Authentication authentication) {
+
+        // Gets the user ID directly from the JWT principal when available.
         if (authentication != null && authentication.getPrincipal() instanceof JwtUtil.JwtUser jwtUser) {
             return jwtUser.userId();
         }
 
+        // Falls back to finding the user by email from the authentication name.
         if (authentication != null && authentication.getName() != null) {
             String name = authentication.getName();
+
             return userRepository.findByEmail(name.trim())
                     .map(User::getId)
-                    .orElseThrow(() -> new ApiException(HttpStatus.UNAUTHORIZED, "User not found"));
+                    .orElseThrow(() ->
+                            new ApiException(HttpStatus.UNAUTHORIZED, "User not found"));
         }
 
+        // Throws an exception when no valid authentication information is available.
         throw new ApiException(HttpStatus.UNAUTHORIZED, "Authentication required");
     }
 }
