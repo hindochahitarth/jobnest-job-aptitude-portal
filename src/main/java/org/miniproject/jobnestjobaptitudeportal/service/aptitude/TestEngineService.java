@@ -270,13 +270,19 @@ public class TestEngineService {
 
         if (request.proctorLogs() != null) {
             for (SubmitTestRequest.ProctorItem pItem : request.proctorLogs()) {
-                ProctorLogRequest pReq = new ProctorLogRequest(
-                        attempt.getId(),
-                        org.miniproject.jobnestjobaptitudeportal.enums.ProctorEvent.valueOf(pItem.eventType()),
-                        pItem.warningNumber(),
-                        pItem.details()
-                );
-                recordProctorLog(userId, pReq);
+                try {
+                    org.miniproject.jobnestjobaptitudeportal.enums.ProctorEvent event =
+                            org.miniproject.jobnestjobaptitudeportal.enums.ProctorEvent.valueOf(pItem.eventType());
+                    ProctorLogRequest pReq = new ProctorLogRequest(
+                            attempt.getId(),
+                            event,
+                            pItem.warningNumber(),
+                            pItem.details()
+                    );
+                    recordProctorLog(userId, pReq);
+                } catch (Exception ignored) {
+                    // Fallback ignoring unknown proctor event string
+                }
             }
         }
 

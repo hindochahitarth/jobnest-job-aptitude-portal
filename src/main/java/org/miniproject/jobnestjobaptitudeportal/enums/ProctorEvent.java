@@ -3,8 +3,15 @@ package org.miniproject.jobnestjobaptitudeportal.enums;
 public enum ProctorEvent {
     TAB_SWITCH,
     FULLSCREEN_EXIT,
+    WINDOW_SWITCH,
     FACE_MISSING,
     MULTIPLE_FACES,
+    CAMERA_COVERED,
+    CAMERA_DISCONNECTED,
+    MIC_DISCONNECTED,
+    SPEECH_DETECTED,
+    EXCESSIVE_NOISE,
+    CAMERA_BLOCKED,
     RIGHT_CLICK_ATTEMPT,
     COPY_PASTE_ATTEMPT
 }
