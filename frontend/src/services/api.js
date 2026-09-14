@@ -360,6 +360,70 @@ export async function getHistoricalResults(token) {
   return response.json();
 }
 
+/* Interview Prep API endpoints */
+export async function getInterviewQuestions(subject, role, difficulty, token) {
+  const headers = {};
+  if (token) headers["Authorization"] = `Bearer ${token}`;
+  const params = new URLSearchParams();
+  if (subject) params.append("subject", subject);
+  if (role) params.append("role", role);
+  if (difficulty) params.append("difficulty", difficulty);
+
+  try {
+    const res = await fetch(`${API_URL}/candidate/interview/questions?${params.toString()}`, { headers });
+    if (!res.ok) return [];
+    return await res.json();
+  } catch (e) {
+    return [];
+  }
+}
+
+export async function getInterviewSubjects(token) {
+  const headers = {};
+  if (token) headers["Authorization"] = `Bearer ${token}`;
+  try {
+    const res = await fetch(`${API_URL}/candidate/interview/subjects`, { headers });
+    if (!res.ok) return ["DBMS", "Operating Systems", "Computer Networks", "Data Structures", "OOP & System Design"];
+    return await res.json();
+  } catch (e) {
+    return ["DBMS", "Operating Systems", "Computer Networks", "Data Structures", "OOP & System Design"];
+  }
+}
+
+export async function generateAiInterviewQuestions(payload, token) {
+  const headers = { "Content-Type": "application/json" };
+  if (token) headers["Authorization"] = `Bearer ${token}`;
+
+  const res = await fetch(`${API_URL}/candidate/interview/ai-generate`, {
+    method: "POST",
+    headers,
+    body: JSON.stringify(payload),
+  });
+
+  if (!res.ok) {
+    throw new Error("Failed to generate AI interview questions");
+  }
+
+  return res.json();
+}
+
+export async function evaluateInterviewAnswer(payload, token) {
+  const headers = { "Content-Type": "application/json" };
+  if (token) headers["Authorization"] = `Bearer ${token}`;
+
+  const res = await fetch(`${API_URL}/candidate/interview/evaluate`, {
+    method: "POST",
+    headers,
+    body: JSON.stringify(payload),
+  });
+
+  if (!res.ok) {
+    throw new Error("Failed to evaluate practice answer");
+  }
+
+  return res.json();
+}
+
 export function authFetch(token) {
   return function (path, opts = {}) {
     const headers = { ...(opts.headers || {}), Authorization: `Bearer ${token}` };
