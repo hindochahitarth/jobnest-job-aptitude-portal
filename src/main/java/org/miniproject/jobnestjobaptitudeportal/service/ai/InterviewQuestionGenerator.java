@@ -2,6 +2,7 @@ package org.miniproject.jobnestjobaptitudeportal.service.ai;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicLong;
 import org.miniproject.jobnestjobaptitudeportal.dto.request.AiInterviewGenerateRequest;
 import org.miniproject.jobnestjobaptitudeportal.dto.request.EvaluateAnswerRequest;
 import org.miniproject.jobnestjobaptitudeportal.dto.response.AnswerEvaluationResponse;
@@ -11,44 +12,94 @@ import org.springframework.stereotype.Service;
 @Service
 public class InterviewQuestionGenerator {
 
+    private final AtomicLong generatedIdSequence = new AtomicLong(2000L);
+
     public List<InterviewQuestionDTO> generateQuestionsFromJd(AiInterviewGenerateRequest request) {
         String role = request.targetRole() != null && !request.targetRole().isBlank() ? request.targetRole() : "Software Developer";
         String subject = request.subject() != null && !request.subject().isBlank() ? request.subject() : "Technical & Behavioral";
+        String skills = request.candidateSkills() != null && !request.candidateSkills().isBlank() ? request.candidateSkills() : "the required technical skills";
 
         List<InterviewQuestionDTO> generated = new ArrayList<>();
+        String lowerSubject = subject.toLowerCase();
+        String lowerRole = role.toLowerCase();
 
-        generated.add(new InterviewQuestionDTO(
-                1001L,
-                role,
-                subject,
-                "System Architecture & Resilience",
-                "INTERMEDIATE",
-                "Given your background in " + role + ", how do you design resilient microservices when external dependencies experience latent response times?",
-                "Use the Circuit Breaker pattern (Resilience4j/Hystrix) with fast fallbacks, set explicit connection timeouts, and implement rate limiting.",
-                "Structure your answer using STAR: Describe a real outage scenario, your architectural fix, and the latency reduction achieved."
-        ));
-
-        generated.add(new InterviewQuestionDTO(
-                1002L,
-                role,
-                subject,
-                "Data Persistence & Query Performance",
-                "ADVANCED",
-                "In a target role like " + role + ", how would you diagnose and optimize slow SQL queries handling millions of transaction logs?",
-                "Analyze query execution plan (EXPLAIN), check index usage, eliminate N+1 queries, introduce read replicas, and partition high-volume tables.",
-                "Mention indexed columns, covering indexes, and avoiding SELECT * queries."
-        ));
-
-        generated.add(new InterviewQuestionDTO(
-                1003L,
-                role,
-                subject,
-                "Behavioral & Project Ownership",
-                "EASY",
-                "Describe a situation where a critical bug slipped into production right before a sprint demo. How did you handle stakeholder communication and technical remediation?",
-                "Immediately communicated the bug scope to team leads, initiated a hotfix branch, added regression unit tests, deployed patch, and held a blameless post-mortem.",
-                "Highlight calm leadership, clear communication, and preventative CI/CD pipeline automated checks."
-        ));
+        if (lowerSubject.contains("struct") || lowerSubject.contains("system") || lowerRole.contains("product")) {
+            generated.add(new InterviewQuestionDTO(
+                    nextGeneratedId(), role, subject, "System Architecture & Resilience", "INTERMEDIATE",
+                    "For a " + role + " role, how would you design resilient services when a downstream API becomes slow or unavailable?",
+                    "Set timeouts, retries with backoff, circuit breakers, rate limits, bulkheads, and graceful fallbacks. Add observability so latency, errors, and saturation can be detected quickly.",
+                    "Mention both prevention and recovery: timeout budgets, fallback behavior, alerts, and post-incident learning."
+            ));
+            generated.add(new InterviewQuestionDTO(
+                    nextGeneratedId(), role, subject, "Trees & Binary Search", "INTERMEDIATE",
+                    "How do you validate whether a binary tree is a valid Binary Search Tree in linear time?",
+                    "Use recursion with min and max bounds for every node, or do an in-order traversal and verify values are strictly increasing. Time is O(N), and space is O(H) for recursion stack.",
+                    "Explain why checking only the immediate left and right children is not enough."
+            ));
+            generated.add(new InterviewQuestionDTO(
+                    nextGeneratedId(), role, subject, "Data Persistence & Query Performance", "ADVANCED",
+                    "How would you diagnose and optimize slow SQL queries over millions of rows?",
+                    "Start with EXPLAIN or the query plan, check index usage, remove N+1 patterns, reduce selected columns, add covering indexes where useful, and consider partitioning or read replicas for high volume reads.",
+                    "Tie each optimization to a measurable effect such as latency, throughput, or reduced database load."
+            ));
+        } else if (lowerSubject.contains("quant") || lowerSubject.contains("consult") || lowerSubject.contains("case")) {
+            generated.add(new InterviewQuestionDTO(
+                    nextGeneratedId(), role, subject, "Market Sizing Guesstimate", "ADVANCED",
+                    "Estimate the daily coffee consumption in a business district with 500,000 office workers.",
+                    "Segment workers into likely coffee drinkers, estimate cups per drinker per day, then multiply by working-day attendance. State assumptions clearly and sanity-check the result.",
+                    "Use a clean population to segment to consumption structure instead of jumping to a final number."
+            ));
+            generated.add(new InterviewQuestionDTO(
+                    nextGeneratedId(), role, subject, "SQL Analytics Window Functions", "INTERMEDIATE",
+                    "How would you rank candidates by assessment score within each job category using SQL?",
+                    "Use DENSE_RANK() OVER (PARTITION BY category ORDER BY score DESC). DENSE_RANK keeps tied candidates at the same rank without leaving gaps in the next rank.",
+                    "Compare RANK, DENSE_RANK, and ROW_NUMBER to show judgment."
+            ));
+            generated.add(new InterviewQuestionDTO(
+                    nextGeneratedId(), role, subject, "Metric Trade-offs", "INTERMEDIATE",
+                    "A dashboard metric improves by 12%, but user complaints increase. How would you decide whether the change should remain live?",
+                    "Review primary, secondary, and guardrail metrics. Segment affected users, inspect complaint themes, confirm statistical significance, and decide using business impact plus user trust.",
+                    "Make your decision criteria explicit before recommending ship, rollback, or iterate."
+            ));
+        } else if (lowerSubject.contains("react") || lowerSubject.contains("node") || lowerSubject.contains("startup")) {
+            generated.add(new InterviewQuestionDTO(
+                    nextGeneratedId(), role, subject, "React Rendering", "PRACTICAL",
+                    "How does React reconciliation reduce DOM updates when rendering large lists?",
+                    "React compares virtual trees and uses keys to match list items between renders. Stable keys help React preserve existing DOM nodes and component state instead of recreating unchanged elements.",
+                    "Explain why array index keys can cause bugs when items are inserted, removed, or reordered."
+            ));
+            generated.add(new InterviewQuestionDTO(
+                    nextGeneratedId(), role, subject, "Node.js Event Loop", "INTERMEDIATE",
+                    "Why can a CPU-heavy synchronous loop block all HTTP requests in Node.js, and how would you fix it?",
+                    "Node.js runs JavaScript on a single main thread. CPU-heavy work blocks the event loop, so it should be moved to Worker Threads, a job queue, or a separate service.",
+                    "Mention that async I/O helps I/O waits, but it does not make CPU work free."
+            ));
+            generated.add(new InterviewQuestionDTO(
+                    nextGeneratedId(), role, subject, "API Error Handling", "PRACTICAL",
+                    "How would you prevent duplicate submissions in a checkout or job-application flow?",
+                    "Use idempotency keys on the backend, disable repeated submit actions while requests are pending, retry only safe operations, and show clear recoverable error states.",
+                    "Cover both frontend experience and backend consistency."
+            ));
+        } else {
+            generated.add(new InterviewQuestionDTO(
+                    nextGeneratedId(), role, subject, "Core Technical Concepts", "INTERMEDIATE",
+                    "What strategies would you use when scaling an application from 1,000 to 1,000,000 daily active users?",
+                    "Add CDN caching for static assets, use application caching, introduce load balancing and horizontal scaling, optimize database queries, and split services only when boundaries are clear.",
+                    "Explain the order of changes and why each step solves a bottleneck."
+            ));
+            generated.add(new InterviewQuestionDTO(
+                    nextGeneratedId(), role, subject, "Role-specific Skills", "INTERMEDIATE",
+                    "Based on skills like " + skills + ", which technical area would you expect interviewers to probe most deeply and why?",
+                    "Identify the most job-critical skill, connect it to business responsibilities, and prepare examples that show depth, trade-offs, and debugging experience.",
+                    "Make the answer specific to the target role rather than listing every skill equally."
+            ));
+            generated.add(new InterviewQuestionDTO(
+                    nextGeneratedId(), role, subject, "Technical Communication", "INTERMEDIATE",
+                    "How do you explain a complex technical trade-off to a non-technical stakeholder?",
+                    "Translate implementation choices into impact on users, delivery time, reliability, and cost. Give a recommendation with risks and a fallback plan.",
+                    "Avoid jargon and end with a clear decision."
+            ));
+        }
 
         return generated;
     }
@@ -74,24 +125,28 @@ public class InterviewQuestionGenerator {
         String lower = answer.toLowerCase();
         if (lower.contains("star") || lower.contains("result") || lower.contains("action") || lower.contains("impact")) {
             score += 15;
-            strengths.add("Applied STAR methodology (Situation, Task, Action, Result) effectively.");
+            strengths.add("Applied STAR methodology effectively.");
         } else {
-            improvements.add("Structure response using STAR: Situation -> Task -> Action -> Result.");
+            improvements.add("Structure response using STAR: Situation, Task, Action, Result.");
         }
 
-        if (lower.contains("index") || lower.contains("thread") || lower.contains("cache") || lower.contains("api") || lower.contains("test")) {
+        if (lower.contains("index") || lower.contains("thread") || lower.contains("cache") || lower.contains("api") || lower.contains("test") || lower.contains("sql") || lower.contains("react")) {
             score += 15;
             strengths.add("Used relevant domain terminology and key technical concepts.");
         } else {
-            improvements.add("Incorporate core Computer Science terminology (e.g. latency, time complexity, scaling).");
+            improvements.add("Incorporate core technical terms such as latency, time complexity, scaling, consistency, or reliability.");
         }
 
         score = Math.min(100, Math.max(35, score));
-        String grade = score >= 85 ? "Excellent (Pass)" : score >= 70 ? "Good (Proficient)" : "Needs Review";
+        String grade = score >= 85 ? "Excellent" : score >= 70 ? "Good" : "Needs Review";
 
-        String modelAnswer = "A strong response directly addresses the core technical problem, provides a concrete scenario, explains trade-offs, and quantifies final metrics or system improvements.";
-        String starAdvice = "Always frame your answer as: 1) What was the challenge? 2) What specific actions did YOU take? 3) What measurable results were achieved?";
+        String modelAnswer = "A strong response directly addresses the technical problem, provides a concrete scenario, explains trade-offs, and quantifies the outcome where possible.";
+        String starAdvice = "Frame project answers around the challenge, your specific action, and the measurable result.";
 
         return new AnswerEvaluationResponse(score, grade, strengths, improvements, modelAnswer, starAdvice);
+    }
+
+    private long nextGeneratedId() {
+        return generatedIdSequence.incrementAndGet();
     }
 }

@@ -1,5 +1,6 @@
 package org.miniproject.jobnestjobaptitudeportal.service.interview;
 
+import java.util.ArrayList;
 import java.util.List;
 import org.miniproject.jobnestjobaptitudeportal.dto.request.AiInterviewGenerateRequest;
 import org.miniproject.jobnestjobaptitudeportal.dto.request.EvaluateAnswerRequest;
@@ -33,7 +34,7 @@ public class InterviewService {
             questions = questionRepository.findAll();
         }
 
-        return questions.stream()
+        List<InterviewQuestionDTO> dtos = new ArrayList<>(questions.stream()
                 .map(q -> new InterviewQuestionDTO(
                         q.getId(),
                         q.getRole(),
@@ -44,13 +45,23 @@ public class InterviewService {
                         q.getSampleAnswer(),
                         q.getAiTips()
                 ))
-                .toList();
+                .toList());
+
+        // Dynamic AI Generation Fallback if fewer than 2 questions exist for the subject/track
+        if (dtos.size() < 2 && subject != null && !subject.isBlank()) {
+            List<InterviewQuestionDTO> aiGenerated = aiGenerator.generateQuestionsFromJd(
+                    new AiInterviewGenerateRequest(role != null ? role : "Software Candidate", "", "", subject)
+            );
+            dtos.addAll(aiGenerated);
+        }
+
+        return dtos;
     }
 
     public List<String> getDistinctSubjects() {
         List<String> subjects = questionRepository.findDistinctSubjects();
         if (subjects.isEmpty()) {
-            return List.of("DBMS", "Operating Systems", "Computer Networks", "Data Structures", "OOP & System Design");
+            return List.of("Data Structures & System Concepts", "Quantitative Estimation & Case Studies", "React, Node.js & Practical Project Scenarios", "DBMS", "Operating Systems", "Computer Networks", "System Design");
         }
         return subjects;
     }
