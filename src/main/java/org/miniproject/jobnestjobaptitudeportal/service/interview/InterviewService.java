@@ -61,7 +61,7 @@ public class InterviewService {
     public List<String> getDistinctSubjects() {
         List<String> subjects = questionRepository.findDistinctSubjects();
         if (subjects.isEmpty()) {
-            return List.of("Data Structures & System Concepts", "Quantitative Estimation & Case Studies", "React, Node.js & Practical Project Scenarios", "DBMS", "Operating Systems", "Computer Networks", "System Design");
+            return List.of("Data Structures & System Concepts", "Quantitative Estimation & Case Studies", "React, Node.js & Practical Project Scenarios", "DBMS", "Operating Systems", "Computer Networks", "AI, Machine Learning & Data Science", "Electronics, Embedded & Hardware Systems", "System Design");
         }
         return subjects;
     }

@@ -61,7 +61,44 @@ public class InterviewQuestionGenerator {
                     "Review primary, secondary, and guardrail metrics. Segment affected users, inspect complaint themes, confirm statistical significance, and decide using business impact plus user trust.",
                     "Make your decision criteria explicit before recommending ship, rollback, or iterate."
             ));
-        } else if (lowerSubject.contains("react") || lowerSubject.contains("node") || lowerSubject.contains("startup")) {
+        } else if (lowerSubject.contains("ai") || lowerSubject.contains("machine") || lowerSubject.contains("learning") || lowerSubject.contains("data science") || lowerRole.contains("ml") || lowerRole.contains("data scientist")) {
+            generated.add(new InterviewQuestionDTO(
+                    nextGeneratedId(), role, subject, "Model Evaluation", "INTERMEDIATE",
+                    "How would you decide whether a classification model is good enough for production?",
+                    "Start with the business goal, then review precision, recall, F1 score, ROC-AUC, confusion matrix, calibration, and error examples. Validate on unseen data and monitor drift after deployment.",
+                    "Connect the metric choice to the cost of false positives and false negatives."
+            ));
+            generated.add(new InterviewQuestionDTO(
+                    nextGeneratedId(), role, subject, "Feature Engineering", "INTERMEDIATE",
+                    "What steps would you take when a model performs well in training but poorly on validation data?",
+                    "Check for overfitting, data leakage, train-validation split issues, class imbalance, noisy labels, and high variance. Use regularization, simpler models, better features, cross-validation, or more representative data.",
+                    "Mention leakage and validation strategy before jumping to model tuning."
+            ));
+            generated.add(new InterviewQuestionDTO(
+                    nextGeneratedId(), role, subject, "ML System Design", "ADVANCED",
+                    "How would you design an ML pipeline that retrains and serves recommendations for a job portal?",
+                    "Collect interaction data, build offline features, train and validate models, register versions, deploy through a serving API, run A/B tests, and monitor latency, drift, and business metrics.",
+                    "Cover both model quality and production reliability."
+            ));
+        } else if (lowerSubject.contains("electronics") || lowerSubject.contains("embedded") || lowerSubject.contains("hardware") || lowerSubject.contains("vlsi") || lowerRole.contains("embedded") || lowerRole.contains("hardware")) {
+            generated.add(new InterviewQuestionDTO(
+                    nextGeneratedId(), role, subject, "Embedded Systems", "INTERMEDIATE",
+                    "How do interrupts differ from polling in an embedded system, and when would you choose each?",
+                    "Interrupts let hardware notify the CPU only when attention is needed, reducing wasted cycles and improving responsiveness. Polling is simpler and can work for low-frequency or deterministic checks where timing is easy to control.",
+                    "Discuss latency, CPU usage, complexity, and debugging trade-offs."
+            ));
+            generated.add(new InterviewQuestionDTO(
+                    nextGeneratedId(), role, subject, "Digital Electronics", "INTERMEDIATE",
+                    "Explain setup time and hold time in flip-flops. What happens if either constraint is violated?",
+                    "Setup time is the minimum time data must be stable before the clock edge, and hold time is the minimum time it must remain stable after the clock edge. Violations can cause metastability and unreliable circuit behavior.",
+                    "Mention clock skew, timing closure, and why synchronizers are used across clock domains."
+            ));
+            generated.add(new InterviewQuestionDTO(
+                    nextGeneratedId(), role, subject, "Hardware Debugging", "PRACTICAL",
+                    "A microcontroller board powers on but does not communicate over UART. How would you debug it?",
+                    "Verify power rails and ground, check baud rate and UART settings, confirm TX/RX wiring, inspect logic levels with an oscilloscope or logic analyzer, and test firmware with a minimal transmit program.",
+                    "Move from physical layer checks to firmware configuration and then protocol-level validation."
+            ));        } else if (lowerSubject.contains("react") || lowerSubject.contains("node") || lowerSubject.contains("startup")) {
             generated.add(new InterviewQuestionDTO(
                     nextGeneratedId(), role, subject, "React Rendering", "PRACTICAL",
                     "How does React reconciliation reduce DOM updates when rendering large lists?",

@@ -3,20 +3,62 @@ import { AuthContext } from "../../context/AuthContext";
 import Card from "../../components/ui/Card";
 import * as api from "../../services/api";
 
-const SUBJECTS = [
-  { id: "ALL", label: "All Subjects" },
-  { id: "Data Structures & System Concepts", label: "DSA & System Concepts" },
-  { id: "Quantitative Estimation & Case Studies", label: "Analytics & Case Studies" },
-  { id: "React, Node.js & Practical Project Scenarios", label: "React & Node.js Practical" },
-  { id: "DBMS", label: "DBMS" },
-  { id: "Operating Systems", label: "Operating Systems" },
-  { id: "Computer Networks", label: "Computer Networks" },
-];
-
 const TRACKS = [
-  { company: "Tech Product Companies", topic: "Data Structures & System Concepts", level: "Intermediate", subject: "Data Structures & System Concepts" },
-  { company: "Consulting & Analytics", topic: "Quantitative Estimation & Case Studies", level: "Advanced", subject: "Quantitative Estimation & Case Studies" },
-  { company: "Early Startups", topic: "React, Node.js & Practical Project Scenarios", level: "Practical", subject: "React, Node.js & Practical Project Scenarios" },
+  {
+    company: "Tech Product Companies",
+    topic: "Data Structures & System Concepts",
+    level: "Intermediate",
+    subject: "Data Structures & System Concepts",
+    industry: "Software Engineering, Backend, Platform Teams",
+  },
+  {
+    company: "Consulting & Analytics",
+    topic: "Quantitative Estimation & Case Studies",
+    level: "Advanced",
+    subject: "Quantitative Estimation & Case Studies",
+    industry: "Consulting, Product Analytics, Business Analyst",
+  },
+  {
+    company: "Early Startups",
+    topic: "React, Node.js & Practical Project Scenarios",
+    level: "Practical",
+    subject: "React, Node.js & Practical Project Scenarios",
+    industry: "Frontend, Full Stack, SaaS Startups",
+  },
+  {
+    company: "Data & SaaS Platforms",
+    topic: "DBMS",
+    level: "Intermediate",
+    subject: "DBMS",
+    industry: "Backend, Data Engineering, Database Admin",
+  },
+  {
+    company: "Cloud Infrastructure",
+    topic: "Operating Systems",
+    level: "Intermediate",
+    subject: "Operating Systems",
+    industry: "DevOps, SRE, Systems Engineering",
+  },
+  {
+    company: "Networking & Security",
+    topic: "Computer Networks",
+    level: "Foundation",
+    subject: "Computer Networks",
+    industry: "Security, Cloud, Network Engineering",
+  },  {
+    company: "AI/ML Teams",
+    topic: "AI & ML",
+    level: "Intermediate",
+    subject: "AI & ML",
+    industry: "ML Engineer, Data Scientist, AI Product Teams",
+  },
+  {
+    company: "Electronics & Hardware",
+    topic: "Electronics & Hardware Systems",
+    level: "Core Engineering",
+    subject: "Electronics & Hardware Systems",
+    industry: "Embedded Systems, IoT, VLSI, Hardware Testing",
+  },
 ];
 
 const panelStyle = {
@@ -32,7 +74,7 @@ function getQuestionKey(question, index) {
 
 export default function InterviewPrep() {
   const { token } = useContext(AuthContext);
-  const [activeSubject, setActiveSubject] = useState("ALL");
+  const [activeSubject, setActiveSubject] = useState(TRACKS[0].subject);
   const [questions, setQuestions] = useState([]);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
@@ -49,20 +91,14 @@ export default function InterviewPrep() {
     loadQuestions();
   }, [activeSubject]);
 
-  const subjectLabel = useMemo(() => SUBJECTS.find((subject) => subject.id === activeSubject)?.label || activeSubject, [activeSubject]);
+  const subjectLabel = useMemo(() => TRACKS.find((track) => track.subject === activeSubject)?.topic || activeSubject, [activeSubject]);
 
-  const trackCounts = useMemo(() => {
-    return TRACKS.reduce((counts, track) => {
-      counts[track.subject] = questions.filter((question) => question.subject === track.subject).length;
-      return counts;
-    }, {});
-  }, [questions]);
 
   async function loadQuestions() {
     setLoading(true);
     setMessage("");
     try {
-      const subjectFilter = activeSubject === "ALL" ? "" : activeSubject;
+      const subjectFilter = activeSubject;
       const data = await api.getInterviewQuestions(subjectFilter, "", "", token);
       setQuestions(Array.isArray(data) ? data : []);
     } catch (e) {
@@ -101,10 +137,10 @@ export default function InterviewPrep() {
     setMessage("");
     try {
       const generatedQuestions = await api.generateAiInterviewQuestions({
-        targetRole: generatorInput.targetRole || (activeSubject !== "ALL" ? activeSubject : "Software Engineer"),
+        targetRole: generatorInput.targetRole || activeSubject,
         jobDescription: generatorInput.jobDescription,
         candidateSkills: generatorInput.candidateSkills,
-        subject: activeSubject === "ALL" ? "Technical & CS Core" : activeSubject,
+        subject: activeSubject,
       }, token);
       setQuestions((prev) => [...generatedQuestions, ...prev]);
       setShowGeneratorModal(false);
@@ -132,28 +168,21 @@ export default function InterviewPrep() {
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))", gap: 14 }}>
         {TRACKS.map((track) => {
           const isActive = activeSubject === track.subject;
-          const visibleCount = isActive || activeSubject === "ALL" ? trackCounts[track.subject] || 0 : null;
+          const visibleCount = isActive ? questions.length : null;
           return (
-            <div key={track.subject} style={{ ...panelStyle, background: isActive ? "var(--primary-light)" : "var(--surface)", border: isActive ? "1.5px solid var(--primary)" : "1px solid var(--surface-border)", display: "flex", flexDirection: "column", gap: 12 }}>
+            <div key={track.subject} style={{ ...panelStyle, background: "var(--surface)", border: isActive ? "1.5px solid var(--primary)" : "1px solid var(--surface-border)", display: "flex", flexDirection: "column", gap: 12, minHeight: 258 }}>
               <div>
                 <span className="badge-v2 primary">{track.company}</span>
-                <h4 style={{ fontSize: 16, fontWeight: 800, margin: "10px 0 6px", color: "var(--text-main)", lineHeight: 1.35 }}>{track.topic}</h4>
+                <h4 style={{ fontSize: 16, fontWeight: 800, margin: "10px 0 6px", color: "var(--text-main)", lineHeight: 1.35, minHeight: 44 }}>{track.topic}</h4>
                 <span style={{ fontSize: 12, color: "var(--text-subtle)", fontWeight: 700 }}>{visibleCount === null ? "Select to load" : `${visibleCount} available now`} - {track.level}</span>
+                <p style={{ fontSize: 12, color: "var(--text-muted)", margin: "8px 0 0", lineHeight: 1.45, minHeight: 36 }}>{track.industry}</p>
               </div>
-              <button type="button" className={isActive ? "btn btn-primary btn-sm" : "btn btn-secondary btn-sm"} onClick={() => setActiveSubject(track.subject)}>
+              <button type="button" className="btn btn-secondary btn-sm" style={{ width: "100%", marginTop: "auto" }} onClick={() => setActiveSubject(track.subject)}>
                 {isActive ? "Active track" : "Start practice"}
               </button>
             </div>
           );
         })}
-      </div>
-
-      <div style={{ display: "flex", gap: 10, overflowX: "auto", paddingBottom: 6 }}>
-        {SUBJECTS.map((subject) => (
-          <button key={subject.id} type="button" onClick={() => setActiveSubject(subject.id)} style={{ padding: "10px 16px", borderRadius: "var(--radius-full)", fontSize: 13, fontWeight: 700, border: activeSubject === subject.id ? "1.5px solid var(--primary)" : "1px solid var(--surface-border)", background: activeSubject === subject.id ? "var(--primary-light)" : "var(--surface)", color: activeSubject === subject.id ? "var(--primary)" : "var(--text-main)", cursor: "pointer", whiteSpace: "nowrap" }}>
-            {subject.label}
-          </button>
-        ))}
       </div>
 
       {message && <div style={{ ...panelStyle, padding: 12, color: "var(--text-main)", fontSize: 13, fontWeight: 700 }}>{message}</div>}
@@ -162,14 +191,14 @@ export default function InterviewPrep() {
         <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
           <Card title={`Practice Questions (${questions.length})`}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16, flexWrap: "wrap", gap: 10 }}>
-              <span style={{ fontSize: 13, color: "var(--text-subtle)", fontWeight: 700 }}>Filter: <strong>{subjectLabel}</strong></span>
+              <span style={{ fontSize: 13, color: "var(--text-subtle)", fontWeight: 700 }}>{subjectLabel}</span>
               <button type="button" className="btn btn-secondary btn-sm" onClick={handleGenerateQuestions} disabled={generating}>{generating ? "Generating..." : "Generate 3 practice questions"}</button>
             </div>
 
             {loading ? (
               <div style={{ padding: 24, textAlign: "center", color: "var(--text-subtle)" }}>Loading practice questions...</div>
             ) : questions.length === 0 ? (
-              <div style={{ padding: 24, textAlign: "center", color: "var(--text-subtle)" }}>No saved questions are available for this filter. Generate a practice set or choose another subject.</div>
+              <div style={{ padding: 24, textAlign: "center", color: "var(--text-subtle)" }}>No saved questions are available for this track. Generate a practice set or choose another card.</div>
             ) : (
               <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
                 {questions.map((question, index) => (
@@ -203,7 +232,7 @@ export default function InterviewPrep() {
           <Card title="Coverage">
             <div style={{ display: "flex", flexDirection: "column", gap: 10, fontSize: 13 }}>
               <div style={{ display: "flex", justifyContent: "space-between", gap: 12 }}><span>Question bank:</span><strong>{questions.length}</strong></div>
-              <div style={{ display: "flex", justifyContent: "space-between", gap: 12 }}><span>Active filter:</span><strong>{subjectLabel}</strong></div>
+              <div style={{ display: "flex", justifyContent: "space-between", gap: 12 }}><span>Selected track:</span><strong>{subjectLabel}</strong></div>
               <div style={{ display: "flex", justifyContent: "space-between", gap: 12 }}><span>Generation:</span><strong>Local templates</strong></div>
               <div style={{ display: "flex", justifyContent: "space-between", gap: 12 }}><span>Evaluation:</span><strong>Heuristic scoring</strong></div>
             </div>
