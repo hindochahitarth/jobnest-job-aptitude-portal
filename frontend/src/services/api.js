@@ -401,7 +401,8 @@ export async function generateAiInterviewQuestions(payload, token) {
   });
 
   if (!res.ok) {
-    throw new Error("Failed to generate AI interview questions");
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.message || "Failed to generate AI interview questions");
   }
 
   return res.json();
@@ -418,7 +419,8 @@ export async function evaluateInterviewAnswer(payload, token) {
   });
 
   if (!res.ok) {
-    throw new Error("Failed to evaluate practice answer");
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.message || "Failed to evaluate practice answer");
   }
 
   return res.json();

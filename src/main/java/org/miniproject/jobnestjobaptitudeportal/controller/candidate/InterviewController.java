@@ -37,10 +37,17 @@ public class InterviewController {
         return ResponseEntity.ok(interviewService.getDistinctSubjects());
     }
 
+    /**
+     * Generate interview questions via Groq AI (or local template fallback).
+     * Accepts an optional ?count parameter (default 5).
+     */
     @PostMapping("/ai-generate")
     public ResponseEntity<List<InterviewQuestionDTO>> generateAiQuestions(
-            @RequestBody AiInterviewGenerateRequest request) {
-        return ResponseEntity.ok(interviewService.generateAiQuestions(request));
+            @RequestBody AiInterviewGenerateRequest request,
+            @RequestParam(defaultValue = "5") int count) {
+        List<InterviewQuestionDTO> questions = interviewService.generateAiQuestions(request);
+        // Return up to `count` questions; generate extra batches if needed
+        return ResponseEntity.ok(questions.stream().limit(count).toList());
     }
 
     @PostMapping("/evaluate")
