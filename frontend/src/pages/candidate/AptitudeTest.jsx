@@ -1,4 +1,5 @@
 import React, { useContext, useEffect, useRef, useState } from "react";
+import ReactDOM from "react-dom";
 import { AuthContext } from "../../context/AuthContext";
 import Card from "../../components/ui/Card";
 import * as api from "../../services/api";
@@ -99,6 +100,12 @@ export default function AptitudeTest() {
   const currentQuestionIdRef = useRef(null);
   const questionStartedAtRef = useRef(Date.now());
   const submittedRef = useRef(false);
+  // Ref tracks true warning count to avoid stale closure in triggerSecurityViolation
+  const warningCountRef = useRef(0);
+  // Ref tracks whether we are running in local fallback mode (no backend session)
+  const isLocalModeRef = useRef(false);
+  // Per-event cooldown timestamps to prevent repeated warnings for the same event
+  const violationCooldownRef = useRef({});
 
   useEffect(() => { answersRef.current = userAnswers; }, [userAnswers]);
 
@@ -127,6 +134,9 @@ export default function AptitudeTest() {
     setLoading(true);
     setErrorMessage("");
     submittedRef.current = false;
+    warningCountRef.current = 0;
+    isLocalModeRef.current = false;
+    violationCooldownRef.current = {};
     const normalizedConfig = {
       ...testConfig,
       questionCount: Math.min(50, Math.max(20, Number(testConfig.questionCount) || 20)),
@@ -143,14 +153,14 @@ export default function AptitudeTest() {
       initializeAnswers(data.questions);
       setPhase(normalizedConfig.proctored ? "PROCTOR_CHECK" : "EXAM");
     } catch (err) {
+      isLocalModeRef.current = true;
       const localQuestions = createLocalQuestions(normalizedConfig);
-      const localAttemptId = Date.now();
-      setAttemptId(localAttemptId);
+      setAttemptId(null);
       setQuestions(localQuestions);
       setCurrentIndex(0);
       setRemainingSeconds(normalizedConfig.timeLimitMinutes * 60);
       initializeAnswers(localQuestions);
-      setErrorMessage(`Backend session offline, running local proctored engine: ${err.message}`);
+      setErrorMessage(`Backend session offline — running local proctored engine: ${err.message}`);
       setPhase(normalizedConfig.proctored ? "PROCTOR_CHECK" : "EXAM");
     } finally {
       setLoading(false);
@@ -230,7 +240,12 @@ export default function AptitudeTest() {
   useEffect(() => {
     if (phase !== "EXAM" || !analyserRef.current) return undefined;
 
-    let speechCounter = 0;
+    // speechCounter must exceed threshold for several consecutive ticks before firing
+    let speechTicks = 0;
+    const SPEECH_THRESHOLD_AVG = 85;   // raised from 70 — reduces false positives
+    const SPEECH_THRESHOLD_VOL = 68;   // raised from 55
+    const TICKS_REQUIRED = 4;           // 4 consecutive ticks (4 s) of sustained speech
+
     const interval = setInterval(() => {
       if (!analyserRef.current) return;
       const dataArray = new Uint8Array(analyserRef.current.frequencyBinCount);
@@ -240,10 +255,8 @@ export default function AptitudeTest() {
       let speechFreqSum = 0;
       for (let i = 0; i < dataArray.length; i += 1) {
         sum += dataArray[i];
-        // Speech frequency range (approx 300Hz-3400Hz)
-        if (i >= 5 && i <= 50) {
-          speechFreqSum += dataArray[i];
-        }
+        // Speech frequency range (approx 300Hz–3400Hz)
+        if (i >= 5 && i <= 50) speechFreqSum += dataArray[i];
       }
 
       const average = sum / dataArray.length;
@@ -251,15 +264,16 @@ export default function AptitudeTest() {
       const vol = Math.min(100, Math.round((average / 128) * 100));
       setMicVolume(vol);
 
-      if (speechAvg > 70 || vol > 55) {
-        speechCounter += 1;
+      if (speechAvg > SPEECH_THRESHOLD_AVG || vol > SPEECH_THRESHOLD_VOL) {
+        speechTicks += 1;
         setAiAudioStatus("⚠️ Speech / Noise Detected");
-        if (speechCounter >= 3) {
+        if (speechTicks >= TICKS_REQUIRED) {
           triggerSecurityViolation("SPEECH_DETECTED", "Human speech or whispering detected on microphone. Please remain quiet.");
-          speechCounter = 0;
+          speechTicks = 0;
         }
       } else {
-        speechCounter = Math.max(0, speechCounter - 1);
+        // Decay counter gradually so brief peaks don't accumulate
+        speechTicks = Math.max(0, speechTicks - 1);
         setAiAudioStatus(vol > 20 ? "🟢 Audio Spectrum Normal" : "🟢 Quiet Environment");
       }
     }, 1000);
@@ -388,15 +402,30 @@ export default function AptitudeTest() {
       window.removeEventListener("copy", handleCopyPaste);
       window.removeEventListener("paste", handleCopyPaste);
     };
-  }, [phase, testConfig.proctored, warningCount]);
+  // Note: warningCount removed from deps — triggerSecurityViolation now uses warningCountRef (no stale closure)
+  }, [phase, testConfig.proctored]);
 
   function triggerSecurityViolation(eventType, details) {
     if (submittedRef.current) return;
-    const nextCount = warningCount + 1;
+
+    // Per-event cooldown: same eventType cannot re-fire within 15 seconds
+    const now = Date.now();
+    const lastFired = violationCooldownRef.current[eventType] || 0;
+    if (now - lastFired < 15000) return;
+    violationCooldownRef.current[eventType] = now;
+
+    // Use ref for warning count to avoid stale closure reading old state
+    const nextCount = warningCountRef.current + 1;
+    warningCountRef.current = nextCount;
     setWarningCount(nextCount);
+
     const logEntry = { eventType, warningNumber: nextCount, details, timestamp: new Date().toLocaleTimeString() };
     setProctorLogs((prev) => [...prev, logEntry]);
-    if (token && attemptId) api.logProctorEvent({ attemptId, eventType, warningNumber: nextCount, details }, token);
+
+    // Only call backend proctor-log when we have a real backend-assigned attemptId
+    if (token && attemptId && !isLocalModeRef.current) {
+      api.logProctorEvent({ attemptId, eventType, warningNumber: nextCount, details }, token);
+    }
 
     if (nextCount >= 3) {
       setActiveWarningModal({ title: "⛔ Exam Auto-Submitted", message: "Maximum 3 proctoring warnings reached. The test has been automatically submitted for evaluation.", isFinal: true });
@@ -436,7 +465,7 @@ export default function AptitudeTest() {
 
   // Robust Exam Submission Handler
   async function handleAutoSubmit(reason = "User Submission") {
-    // CRITICAL FIX: Dismiss warning overlay modal so scorecard renders cleanly!
+    // Dismiss warning overlay modal so scorecard renders cleanly
     setActiveWarningModal(null);
 
     if (submittedRef.current) return;
@@ -466,7 +495,11 @@ export default function AptitudeTest() {
     }));
     const payload = { attemptId, answers: formattedAnswers, proctorLogs };
 
+    // Only call backend submit when we have a real server-assigned attemptId
+    const canSubmitToBackend = token && attemptId && !isLocalModeRef.current;
+
     try {
+      if (!canSubmitToBackend) throw new Error("Local mode — computing score offline.");
       const data = await api.submitAptitudeTest(payload, token);
       setResult(data);
     } catch {
@@ -574,8 +607,9 @@ export default function AptitudeTest() {
   }
 
   if (phase === "PROCTOR_CHECK") {
-    return (
-      <div style={{ maxWidth: 650, margin: "40px auto" }}>
+    return ReactDOM.createPortal(
+      <div style={{ position: "fixed", inset: 0, zIndex: 99999, background: "var(--bg, #f8fafc)", overflowY: "auto" }}>
+      <div style={{ maxWidth: 650, margin: "40px auto", padding: "0 16px" }}>
         <Card title="Proctoring System & Device Check" icon="📹">
           <div style={{ textAlign: "center", display: "flex", flexDirection: "column", gap: 20 }}>
             {errorMessage && <div style={{ padding: 12, background: "var(--warning-bg)", color: "var(--warning)", borderRadius: "var(--radius-md)", fontSize: 13 }}>{errorMessage}</div>}
@@ -610,6 +644,8 @@ export default function AptitudeTest() {
           </div>
         </Card>
       </div>
+      </div>,
+      document.body
     );
   }
 
@@ -618,14 +654,15 @@ export default function AptitudeTest() {
     const userSel = userAnswers[currentQ?.id]?.option;
     const isMarked = !!userAnswers[currentQ?.id]?.marked;
 
-    return (
-      <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+    return ReactDOM.createPortal(
+      <div style={{ position: "fixed", inset: 0, zIndex: 99999, background: "var(--bg, #f8fafc)", overflowY: "auto" }}>
+      <div style={{ display: "flex", flexDirection: "column", gap: 16, padding: "16px 20px", maxWidth: 1200, margin: "0 auto" }}>
         {errorMessage && <div style={{ padding: 12, background: "var(--warning-bg)", color: "var(--warning)", borderRadius: "var(--radius-md)", fontSize: 13 }}>{errorMessage}</div>}
 
         {/* Sticky Exam Topbar */}
         <div style={{
           position: "sticky",
-          top: 70,
+          top: 0,
           zIndex: 30,
           background: "var(--surface)",
           border: "1px solid var(--surface-border)",
@@ -772,6 +809,8 @@ export default function AptitudeTest() {
           </Card>
         </div>
       </div>
+      </div>,
+      document.body
     );
   }
 
@@ -827,9 +866,16 @@ export default function AptitudeTest() {
           </p>
           {(result.proctorLogs || []).length > 0 ? (
             <ul style={{ display: "flex", flexDirection: "column", gap: 8, fontSize: 12.5 }}>
-              {result.proctorLogs.map((log, idx) => (
-                <li key={idx}>Warning #{log.warningNumber}: {log.details || log.eventType} ({log.timestamp})</li>
-              ))}
+              {result.proctorLogs.map((log, idx) => {
+                // Normalise timestamp: ISO strings from backend vs locale strings from local mode
+                let ts = log.timestamp || "";
+                if (ts && ts.includes("T")) {
+                  try { ts = new Date(ts).toLocaleTimeString(); } catch { /* keep original */ }
+                }
+                return (
+                  <li key={idx}>Warning #{log.warningNumber}: {log.details || log.eventType} ({ts})</li>
+                );
+              })}
             </ul>
           ) : (
             <p style={{ fontSize: 13, color: "var(--text-subtle)" }}>✓ No security violations recorded during examination.</p>
@@ -837,7 +883,16 @@ export default function AptitudeTest() {
         </Card>
 
         <div style={{ display: "flex", gap: 14 }}>
-          <button type="button" className="btn btn-primary" style={{ flex: 1 }} onClick={() => setPhase("SETUP")}>
+          <button type="button" className="btn btn-primary" style={{ flex: 1 }} onClick={() => {
+            setPhase("SETUP");
+            setResult(null);
+            setWarningCount(0);
+            warningCountRef.current = 0;
+            setProctorLogs([]);
+            setErrorMessage("");
+            isLocalModeRef.current = false;
+            violationCooldownRef.current = {};
+          }}>
             Take Another Test
           </button>
           <button type="button" className="btn btn-secondary" style={{ flex: 1 }} onClick={() => window.print()}>
