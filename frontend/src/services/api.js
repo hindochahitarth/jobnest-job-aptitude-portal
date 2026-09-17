@@ -432,3 +432,78 @@ export function authFetch(token) {
     return fetch(`${API_URL}${path}`, { ...opts, headers });
   };
 }
+
+/* ============================================================
+   Resume Builder API
+   ============================================================ */
+
+/**
+ * GET /api/candidate/resume/templates
+ * Returns the list of available resume templates.
+ */
+export async function getResumeTemplates(token) {
+  const headers = {};
+  if (token) headers["Authorization"] = `Bearer ${token}`;
+  try {
+    const res = await fetch(`${API_URL}/candidate/resume/templates`, { headers });
+    if (!res.ok) return [];
+    return await res.json();
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * POST /api/candidate/resume/preview
+ * Sends resume data + templateId, receives rendered HTML string.
+ */
+export async function previewResume(resumeData, token) {
+  const headers = { "Content-Type": "application/json" };
+  if (token) headers["Authorization"] = `Bearer ${token}`;
+  const res = await fetch(`${API_URL}/candidate/resume/preview`, {
+    method: "POST",
+    headers,
+    body: JSON.stringify(resumeData),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.message || "Preview generation failed");
+  }
+  return res.json(); // { html: "..." }
+}
+
+/**
+ * POST /api/candidate/resume/download
+ * Sends resume data, receives a PDF blob.
+ */
+export async function downloadResumePdf(resumeData, token) {
+  const headers = { "Content-Type": "application/json" };
+  if (token) headers["Authorization"] = `Bearer ${token}`;
+  const res = await fetch(`${API_URL}/candidate/resume/download`, {
+    method: "POST",
+    headers,
+    body: JSON.stringify(resumeData),
+  });
+  if (!res.ok) throw new Error("PDF download failed");
+  return res.blob();
+}
+
+/**
+ * POST /api/candidate/resume/ai-assist
+ * Requests AI assistance for a resume section.
+ * action: "generate_summary" | "improve_experience" | "suggest_skills" | "improve_bullets" | "improve_grammar"
+ */
+export async function resumeAiAssist(payload, token) {
+  const headers = { "Content-Type": "application/json" };
+  if (token) headers["Authorization"] = `Bearer ${token}`;
+  const res = await fetch(`${API_URL}/candidate/resume/ai-assist`, {
+    method: "POST",
+    headers,
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.message || "AI assist failed");
+  }
+  return res.json(); // { success, result, action, message }
+}

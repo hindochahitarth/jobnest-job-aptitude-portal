@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>{{fullName}} — Executive Resume</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 10.5pt;
+    line-height: 1.45;
+    color: #1c1c1c;
+    background: #fff;
+    max-width: 8.5in;
+  }
+  .banner {
+    background: #1a2744;
+    color: #fff;
+    padding: 22px 0.75in 18px;
+  }
+  .banner .name { font-size: 22pt; font-weight: bold; letter-spacing: 0.5px; }
+  .banner .headline { font-size: 11.5pt; color: #a8b8d8; margin-top: 4px; font-style: italic; }
+  .banner .contact-row { display: flex; flex-wrap: wrap; gap: 6px 22px; margin-top: 10px; font-size: 9.5pt; color: #c5d0e8; }
+  .banner .contact-row a { color: #c5d0e8; text-decoration: none; }
+  .body-wrap { padding: 22px 0.75in; }
+  .section { margin-bottom: 20px; }
+  .section-title {
+    font-size: 9pt;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 2.5px;
+    color: #1a2744;
+    padding-bottom: 4px;
+    border-bottom: 2px solid #1a2744;
+    margin-bottom: 10px;
+  }
+  .summary-text { font-size: 10.5pt; line-height: 1.6; }
+  .entry { margin-bottom: 13px; }
+  .entry-row { display: flex; justify-content: space-between; align-items: baseline; }
+  .entry-title { font-weight: bold; font-size: 11pt; }
+  .entry-company { font-size: 10pt; font-style: italic; color: #444; }
+  .entry-date { font-size: 9.5pt; color: #666; font-style: normal; white-space: nowrap; }
+  .entry-location { font-size: 10pt; color: #555; }
+  ul { margin-left: 18px; margin-top: 5px; }
+  ul li { font-size: 10pt; margin-bottom: 3px; }
+  .two-col-skills { display: flex; gap: 30px; flex-wrap: wrap; }
+  .skill-group { flex: 1; min-width: 200px; margin-bottom: 8px; }
+  .skill-group-title { font-weight: bold; font-size: 10pt; margin-bottom: 3px; color: #1a2744; }
+  .skill-items { font-size: 10pt; color: #333; }
+  .cert-row { display: flex; justify-content: space-between; margin-bottom: 4px; font-size: 10pt; }
+  .cert-row .cert-name { font-weight: bold; }
+  .cert-row .cert-meta { color: #555; font-style: italic; }
+  .divider { border: none; border-top: 1px solid #d0d8e8; margin: 4px 0 8px; }
+  @media print {
+    .banner { padding: 18px 0.7in 14px; }
+    .body-wrap { padding: 18px 0.7in; }
+    .section { page-break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+
+  <div class="banner">
+    <div class="name">{{fullName}}</div>
+    {{#headline}}<div class="headline">{{headline}}</div>{{/headline}}
+    <div class="contact-row">
+      {{#email}}<span>{{email}}</span>{{/email}}
+      {{#phone}}<span>{{phone}}</span>{{/phone}}
+      {{#location}}<span>{{location}}</span>{{/location}}
+      {{#linkedIn}}<a href="{{linkedIn}}">LinkedIn Profile</a>{{/linkedIn}}
+      {{#portfolio}}<a href="{{portfolio}}">Portfolio</a>{{/portfolio}}
+    </div>
+  </div>
+
+  <div class="body-wrap">
+
+    {{#summary}}
+    <div class="section">
+      <div class="section-title">Executive Summary</div>
+      <div class="summary-text">{{summary}}</div>
+    </div>
+    {{/summary}}
+
+    {{#hasExperience}}
+    <div class="section">
+      <div class="section-title">Professional Experience</div>
+      {{#experience}}
+      <div class="entry">
+        <div class="entry-row">
+          <span class="entry-title">{{title}}</span>
+          <span class="entry-date">{{startDate}} – {{endDate}}</span>
+        </div>
+        <div class="entry-row">
+          <span class="entry-company">{{company}}{{#location}}, {{location}}{{/location}}</span>
+        </div>
+        {{#bullets}}
+        <ul>{{#.}}<li>{{.}}</li>{{/.}}</ul>
+        {{/bullets}}
+        {{^bullets}}{{#description}}<p style="font-size:10pt;margin-top:5px;">{{description}}</p>{{/description}}{{/bullets}}
+      </div>
+      {{/experience}}
+    </div>
+    {{/hasExperience}}
+
+    {{#hasEducation}}
+    <div class="section">
+      <div class="section-title">Education</div>
+      {{#education}}
+      <div class="entry">
+        <div class="entry-row">
+          <span class="entry-title">{{degree}}{{#field}} in {{field}}{{/field}}</span>
+          <span class="entry-date">{{startDate}} – {{endDate}}</span>
+        </div>
+        <div class="entry-row">
+          <span class="entry-company">{{institution}}{{#location}}, {{location}}{{/location}}</span>
+          {{#gpa}}<span class="entry-date">GPA: {{gpa}}</span>{{/gpa}}
+        </div>
+        {{#honors}}<div style="font-size:9.5pt;font-style:italic;color:#555;margin-top:2px;">{{honors}}</div>{{/honors}}
+      </div>
+      {{/education}}
+    </div>
+    {{/hasEducation}}
+
+    {{#hasSkills}}
+    <div class="section">
+      <div class="section-title">Core Competencies &amp; Skills</div>
+      <div class="two-col-skills">
+        {{#skillCategories}}
+        <div class="skill-group">
+          <div class="skill-group-title">{{category}}</div>
+          <div class="skill-items">{{items}}</div>
+        </div>
+        {{/skillCategories}}
+        {{^skillCategories}}
+        <div style="font-size:10.5pt;">{{skills}}</div>
+        {{/skillCategories}}
+      </div>
+    </div>
+    {{/hasSkills}}
+
+    {{#hasProjects}}
+    <div class="section">
+      <div class="section-title">Key Projects</div>
+      {{#projects}}
+      <div class="entry">
+        <div class="entry-row">
+          <span class="entry-title">{{name}}</span>
+          {{#date}}<span class="entry-date">{{date}}</span>{{/date}}
+        </div>
+        {{#techStack}}<div style="font-size:9.5pt;color:#1a2744;font-style:italic;margin-bottom:3px;">{{techStack}}</div>{{/techStack}}
+        {{#bullets}}<ul>{{#.}}<li>{{.}}</li>{{/.}}</ul>{{/bullets}}
+        {{^bullets}}{{#description}}<p style="font-size:10pt;margin-top:4px;">{{description}}</p>{{/description}}{{/bullets}}
+      </div>
+      {{/projects}}
+    </div>
+    {{/hasProjects}}
+
+    {{#hasCertifications}}
+    <div class="section">
+      <div class="section-title">Certifications &amp; Credentials</div>
+      {{#certifications}}
+      <div class="cert-row">
+        <span class="cert-name">{{name}}{{#issuer}} &nbsp;|&nbsp; <span class="cert-meta">{{issuer}}</span>{{/issuer}}</span>
+        {{#date}}<span class="cert-meta">{{date}}</span>{{/date}}
+      </div>
+      {{/certifications}}
+    </div>
+    {{/hasCertifications}}
+
+    {{#hasAchievements}}
+    <div class="section">
+      <div class="section-title">Honors &amp; Achievements</div>
+      <ul>{{#achievements}}<li>{{.}}</li>{{/achievements}}</ul>
+    </div>
+    {{/hasAchievements}}
+
+  </div>
+</body>
+</html>
