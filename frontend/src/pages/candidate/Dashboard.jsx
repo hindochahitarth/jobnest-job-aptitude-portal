@@ -10,6 +10,7 @@ import Tests from "./Tests";
 import AptitudeTest from "./AptitudeTest";
 import Results from "./Results";
 import InterviewPrep from "./InterviewPrep";
+import MockInterview from "./MockInterview";
 import * as api from "../../services/api";
 
 function resolveSection(path) {
@@ -31,6 +32,8 @@ function resolveSection(path) {
       return <Results />;
     case "/interview":
       return <InterviewPrep />;
+    case "/mock-interview":
+      return <MockInterview />;
     default:
       return <Overview />;
   }
@@ -90,6 +93,11 @@ export default function Dashboard() {
     {
       key: "interview", href: "/dashboard/interview", label: "Interview Prep",
       icon: (<svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>),
+    },
+    {
+      key: "mock-interview", href: "/dashboard/mock-interview", label: "AI Mock Interview",
+      badge: "NEW",
+      icon: (<svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>),
     },
   ];
 

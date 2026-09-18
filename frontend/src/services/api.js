@@ -434,6 +434,95 @@ export function authFetch(token) {
 }
 
 /* ============================================================
+   AI Mock Interview — Freemium Session API
+   ============================================================ */
+
+/**
+ * POST /api/candidate/interview/mock/start
+ * Starts a new mock interview session (5 questions, 300s limit).
+ */
+export async function startMockSession(payload, token) {
+  const res = await fetch(`${API_URL}/candidate/interview/mock/start`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.message || "Failed to start mock interview session");
+  }
+  return res.json();
+}
+
+/**
+ * POST /api/candidate/interview/mock/submit-answer
+ * Submits one answer, receives evaluation + updated session state.
+ */
+export async function submitMockAnswer(payload, token) {
+  const res = await fetch(`${API_URL}/candidate/interview/mock/submit-answer`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.message || "Failed to submit answer");
+  }
+  return res.json();
+}
+
+/**
+ * GET /api/candidate/interview/mock/session/:sessionId
+ * Retrieves a session by ID.
+ */
+export async function getMockSession(sessionId, token) {
+  const res = await fetch(`${API_URL}/candidate/interview/mock/session/${sessionId}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.message || "Failed to fetch session");
+  }
+  return res.json();
+}
+
+/**
+ * POST /api/candidate/interview/mock/force-end/:sessionId
+ * Forces session termination when the client-side countdown reaches zero.
+ */
+export async function forceEndMockSession(sessionId, elapsedSeconds, token) {
+  const res = await fetch(
+    `${API_URL}/candidate/interview/mock/force-end/${sessionId}?elapsedSeconds=${elapsedSeconds}`,
+    {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` },
+    }
+  );
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.message || "Failed to end session");
+  }
+  return res.json();
+}
+
+/**
+ * POST /api/candidate/interview/mock/voice-reply
+ * Interactive voice interview: submit spoken transcript, receive spoken reply + evaluation.
+ */
+export async function submitVoiceReply(payload, token) {
+  const res = await fetch(`${API_URL}/candidate/interview/mock/voice-reply`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.message || "Failed to submit voice reply");
+  }
+  return res.json();
+}
+
+/* ============================================================
    Resume Builder API
    ============================================================ */
 
