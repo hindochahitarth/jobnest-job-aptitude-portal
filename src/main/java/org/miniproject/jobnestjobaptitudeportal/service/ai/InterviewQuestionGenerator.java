@@ -54,95 +54,153 @@ public class InterviewQuestionGenerator {
     }
 
     /**
-     * Calls Groq to generate 5 unique, randomized interview questions.
-     * Returns null on any parse / network failure so the caller can fall back.
+     * Calls Groq AI to generate 5 unique interview questions.
+     * If Groq fails, it returns null so the fallback method can be used.
      */
-    private List<InterviewQuestionDTO> tryGroqGenerate(String role, String subject, String skills, String jd) {
+    private List<InterviewQuestionDTO> tryGroqGenerate(
+            String role,
+            String subject,
+            String skills,
+            String jd) {
+
+        // Instructions given to the AI about how to generate questions
         String systemPrompt = """
-                You are an expert technical interviewer at a top technology company.
-                Your job is to create original, thought-provoking interview questions.
-                Every time you are called you MUST produce DIFFERENT questions — never repeat the same wording.
-                Use varied difficulty levels, angles, and real-world contexts to keep candidates on their toes.
-                """;
+            You are an expert technical interviewer at a top technology company.
+            Your job is to create original, thought-provoking interview questions.
+            Every time you are called you MUST produce DIFFERENT questions — never repeat the same wording.
+            Use varied difficulty levels, angles, and real-world contexts to keep candidates on their toes.
+            """;
 
+        // Create the actual request/message that will be sent to Groq
+        // It contains the candidate's role, subject, skills and job description
         String userMessage = String.format("""
-                Generate exactly 5 interview questions for:
-                - Target Role: %s
-                - Subject/Track: %s
-                - Candidate Skills: %s
-                %s
+            Generate exactly 5 interview questions for:
+            - Target Role: %s
+            - Subject/Track: %s
+            - Candidate Skills: %s
+            %s
 
-                Requirements:
-                1. Questions must be UNIQUE and RANDOM — vary the topic angle, difficulty, and scenario each time.
-                2. Include a mix of conceptual, applied/practical, and system-design angles.
-                3. Difficulty levels: BEGINNER, INTERMEDIATE, ADVANCED (mix them).
-                4. Each question must have a concise model answer (2-4 sentences) and a short tip (1 sentence).
+            Requirements:
+            1. Questions must be UNIQUE and RANDOM — vary the topic angle, difficulty, and scenario each time.
+            2. Include a mix of conceptual, applied/practical, and system-design angles.
+            3. Difficulty levels: BEGINNER, INTERMEDIATE, ADVANCED (mix them).
+            4. Each question must have a concise model answer (2-4 sentences) and a short tip (1 sentence).
 
-                Return ONLY valid JSON — an array of exactly 5 objects with this schema:
-                [
-                  {
-                    "skill": "<specific skill or sub-topic>",
-                    "difficulty": "<BEGINNER|INTERMEDIATE|ADVANCED>",
-                    "questionText": "<the interview question>",
-                    "sampleAnswer": "<concise model answer>",
-                    "aiTips": "<one-sentence interviewer tip>"
-                  }
-                ]
-                No markdown, no explanation, no extra text — raw JSON array only.
-                """,
+            Return ONLY valid JSON — an array of exactly 5 objects with this schema:
+            [
+              {
+                "skill": "<specific skill or sub-topic>",
+                "difficulty": "<BEGINNER|INTERMEDIATE|ADVANCED>",
+                "questionText": "<the interview question>",
+                "sampleAnswer": "<concise model answer>",
+                "aiTips": "<one-sentence interviewer tip>"
+              }
+            ]
+            No markdown, no explanation, no extra text — raw JSON array only.
+            """,
                 role, subject, skills,
                 jd.isBlank() ? "" : "- Job Description Notes: " + jd
         );
 
+        // Send the prompt to Groq AI
         String raw = groqApiClient.chat(systemPrompt, userMessage);
-        if (raw == null || raw.isBlank()) return null;
+
+        // If Groq gives no response, return null
+        if (raw == null || raw.isBlank()) {
+            return null;
+        }
 
         try {
-            // Strip markdown code fences if the model wraps the JSON
+
+            // Remove unnecessary spaces from the AI response
             String json = raw.trim();
+
+            // If AI returns JSON inside ``` ```,
+            // remove those code fences
             if (json.startsWith("```")) {
-                json = json.replaceFirst("```[a-zA-Z]*\\n?", "").replaceAll("```$", "").trim();
+                json = json
+                        .replaceFirst("```[a-zA-Z]*\\n?", "")
+                        .replaceAll("```$", "")
+                        .trim();
             }
 
-            List<Map<String, String>> items = mapper.readValue(json, new TypeReference<>() {});
+            // Convert the JSON response into a Java List
+            List<Map<String, String>> items =
+                    mapper.readValue(json, new TypeReference<>() {});
+
+            // Create a list to store the final interview questions
             List<InterviewQuestionDTO> result = new ArrayList<>();
+
+            // Go through every question received from Groq
             for (Map<String, String> item : items) {
+
+                // Convert each AI question into InterviewQuestionDTO
                 result.add(new InterviewQuestionDTO(
-                        nextGeneratedId(),
-                        role,
-                        subject,
-                        nvl(item.get("skill"), subject),
-                        nvl(item.get("difficulty"), "INTERMEDIATE"),
-                        nvl(item.get("questionText"), ""),
-                        nvl(item.get("sampleAnswer"), ""),
-                        nvl(item.get("aiTips"), "")
+                        nextGeneratedId(),                         // Generate ID
+                        role,                                     // Job role
+                        subject,                                  // Subject
+                        nvl(item.get("skill"), subject),           // Skill
+                        nvl(item.get("difficulty"), "INTERMEDIATE"), // Difficulty
+                        nvl(item.get("questionText"), ""),        // Question
+                        nvl(item.get("sampleAnswer"), ""),        // Model answer
+                        nvl(item.get("aiTips"), "")               // AI tip
                 ));
             }
+
+            // Return the generated questions
+            // If no questions were generated, return null
             return result.isEmpty() ? null : result;
+
         } catch (Exception ex) {
-            log.warn("Failed to parse Groq question JSON: {} — raw={}", ex.getMessage(), raw.substring(0, Math.min(200, raw.length())));
+
+            // If JSON parsing fails, log the error
+            log.warn(
+                    "Failed to parse Groq question JSON: {} — raw={}",
+                    ex.getMessage(),
+                    raw.substring(0, Math.min(200, raw.length()))
+            );
+
+            // Return null so the fallback method can be used
             return null;
         }
     }
 
-    // -------------------------------------------------------------------------
-    // Answer Evaluation
-    // -------------------------------------------------------------------------
 
-    public AnswerEvaluationResponse evaluateAnswer(EvaluateAnswerRequest request) {
-        String answer = request.candidateAnswer() != null ? request.candidateAnswer().trim() : "";
-        String questionText = nvl(request.questionText(), "");
+// -------------------------------------------------------------------------
+// Answer Evaluation
+// -------------------------------------------------------------------------
 
-        // Try Groq evaluation first
-        AnswerEvaluationResponse groqResult = tryGroqEvaluate(questionText, answer);
+    /**
+     * Evaluates the candidate's interview answer.
+     */
+    public AnswerEvaluationResponse evaluateAnswer(
+            EvaluateAnswerRequest request) {
+
+        // Get the candidate's answer
+        // If answer is null, use an empty string
+        String answer = request.candidateAnswer() != null
+                ? request.candidateAnswer().trim()
+                : "";
+
+        // Get the interview question
+        String questionText = nvl(
+                request.questionText(),
+                ""
+        );
+
+        // First try to evaluate the answer using Groq AI
+        AnswerEvaluationResponse groqResult =
+                tryGroqEvaluate(questionText, answer);
+
+        // If Groq successfully evaluated the answer,
+        // return the AI evaluation
         if (groqResult != null) {
             return groqResult;
         }
 
-        // Heuristic fallback
+        // If Groq fails, use our local rule-based evaluation
         return heuristicEvaluate(answer);
     }
-
     private AnswerEvaluationResponse tryGroqEvaluate(String questionText, String answer) {
         if (answer.isBlank() || questionText.isBlank()) return null;
 
