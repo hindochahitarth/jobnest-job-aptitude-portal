@@ -1,4 +1,4 @@
-CREATE TABLE candidate_profiles (
+CREATE TABLE IF NOT EXISTS candidate_profiles (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
     user_id BIGINT NOT NULL UNIQUE,
     headline VARCHAR(255),
