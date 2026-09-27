@@ -1,6 +1,6 @@
 import React from "react";
 
-export default function JobCard({ job, onApply, showApply = true, isSelected = false }) {
+export default function JobCard({ job, onApply, showApply = true, isSelected = false, isApplied = false }) {
   const companyInitial = (job.company || "C").charAt(0).toUpperCase();
   const match = job.matchScore ?? job.match;
   const description = job.description || job.snippet;
@@ -45,16 +45,25 @@ export default function JobCard({ job, onApply, showApply = true, isSelected = f
 
       <div className="job-card-footer">
         <div className="salary-text">{job.salary || "₹8 LPA - ₹12 LPA"}</div>
-        <button
-          type="button"
-          className="btn btn-primary btn-sm"
-          onClick={(e) => {
-            e.stopPropagation();
-            onApply && onApply(job);
-          }}
-        >
-          {showApply ? "Easy Apply" : "Login to Apply"}
-        </button>
+        {isApplied ? (
+          <span
+            className="badge-v2 success"
+            style={{ padding: "6px 12px", fontSize: 12, fontWeight: 700 }}
+          >
+            ✓ Applied
+          </span>
+        ) : (
+          <button
+            type="button"
+            className="btn btn-primary btn-sm"
+            onClick={(e) => {
+              e.stopPropagation();
+              onApply && onApply(job);
+            }}
+          >
+            {showApply ? "Easy Apply" : "Login to Apply"}
+          </button>
+        )}
       </div>
     </div>
   );

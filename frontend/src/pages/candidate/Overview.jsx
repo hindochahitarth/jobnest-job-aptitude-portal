@@ -24,6 +24,10 @@ export default function Overview() {
   const [profile, setProfile] = useState(null);
   const [recommendedJobs, setRecommendedJobs] = useState([]);
   const [loadingJobs, setLoadingJobs] = useState(true);
+  const [appliedJobs, setAppliedJobs] = useState({});
+  const [applicationCount, setApplicationCount] = useState(0);
+  const [testCount, setTestCount] = useState(0);
+  const [toastMessage, setToastMessage] = useState(null);
 
   useEffect(() => {
     if (!token) return;
@@ -50,6 +54,30 @@ export default function Overview() {
         if (!cancelled) setLoadingJobs(false);
       });
 
+    // Fetch applications count and applied status
+    api.getCandidateApplications(token)
+      .then((apps) => {
+        if (cancelled || !apps) return;
+        const map = {};
+        apps.forEach((a) => { if (a.jobId) map[a.jobId] = true; });
+        setAppliedJobs(map);
+        setApplicationCount(apps.length);
+      })
+      .catch(() => {});
+
+    // Fetch historical test results count
+    api.getHistoricalResults(token)
+      .then((results) => {
+        if (cancelled || !results) return;
+        setTestCount(results.length);
+      })
+      .catch(() => {
+        try {
+          const local = JSON.parse(localStorage.getItem("jobnestAptitudeResults") || "[]");
+          if (!cancelled) setTestCount(local.length);
+        } catch {}
+      });
+
     return () => { cancelled = true; };
   }, [token]);
 
@@ -65,7 +93,7 @@ export default function Overview() {
       icon: (<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>),
     },
     {
-      label: "Applications Sent", value: "14",
+      label: "Applications Sent", value: `${applicationCount}`,
       icon: (<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>),
     },
     {
@@ -73,7 +101,7 @@ export default function Overview() {
       icon: (<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg>),
     },
     {
-      label: "Aptitude Tests", value: "6 Completed",
+      label: "Aptitude Tests", value: `${testCount} Completed`,
       icon: (<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>),
     },
   ];
@@ -83,12 +111,39 @@ export default function Overview() {
     window.dispatchEvent(new PopStateEvent("popstate"));
   }
 
-  function handleApply(job) {
-    alert(`Successfully applied to ${job.title} at ${job.company}!`);
+  async function handleApply(job) {
+    if (!token) {
+      navigateTo("/login");
+      return;
+    }
+
+    if (appliedJobs[job.id]) return;
+
+    try {
+      await api.applyToJob(job.id, token);
+      setAppliedJobs((prev) => ({ ...prev, [job.id]: true }));
+      setApplicationCount((prev) => prev + 1);
+      setToastMessage(`🎉 Application sent to ${job.company} for "${job.title}"!`);
+    } catch (err) {
+      if (err.message && err.message.toLowerCase().includes("already applied")) {
+        setAppliedJobs((prev) => ({ ...prev, [job.id]: true }));
+        setToastMessage(`ℹ️ You already applied to "${job.title}".`);
+      } else {
+        setToastMessage(`⚠️ ${err.message || "Failed to apply. Please try again."}`);
+      }
+    } finally {
+      setTimeout(() => setToastMessage(null), 3500);
+    }
   }
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+      {toastMessage && (
+        <div className="profile-toast success" style={{ position: "fixed", top: 24, right: 24, zIndex: 9999 }}>
+          {toastMessage}
+        </div>
+      )}
+
       {/* 4 Stat Cards Grid Across Top */}
       <div className="stat-cards-grid-top">
         {stats.map((st) => (
@@ -142,7 +197,12 @@ export default function Overview() {
                 </div>
               ) : recommendedJobs.length > 0 ? (
                 recommendedJobs.map((j) => (
-                  <JobCard key={j.id} job={j} onApply={handleApply} />
+                  <JobCard
+                    key={j.id}
+                    job={j}
+                    onApply={handleApply}
+                    isApplied={!!appliedJobs[j.id]}
+                  />
                 ))
               ) : (
                 <div style={{ textAlign: "center", padding: 20, color: "var(--text-subtle)", fontSize: 13 }}>

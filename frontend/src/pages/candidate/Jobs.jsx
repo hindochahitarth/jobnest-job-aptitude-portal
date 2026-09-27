@@ -293,6 +293,7 @@ export default function JobsPage({ embed = false }) {
                     onApply={handleApply}
                     showApply={isLoggedIn}
                     isSelected={selectedJob?.id === job.id}
+                    isApplied={!!appliedJobs[job.id]}
                   />
                 </div>
               ))
