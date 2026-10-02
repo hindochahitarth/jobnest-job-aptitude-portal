@@ -168,7 +168,7 @@ export default function PostJob() {
 
       <div className="side-col">
         <Card title="Recruiter Job Posting Tips" icon="💡">
-          <ul style={{ listStyle: "none", display: "flex", flexDirection: "column", gap: 10, fontSize: 13, color: "var(--text-main)" }}>
+          <ul style={{ listStyle: "none", margin: 0, padding: 0, display: "flex", flexDirection: "column", gap: 10, fontSize: 13, color: "var(--text-main)" }}>
             <li>✔️ Setting an Aptitude Cutoff filters out unverified candidates automatically.</li>
             <li>✔️ Standardized skill tags increase candidate match accuracy by 40%.</li>
             <li>✔️ Including salary ranges gets 2.5x more qualified applications on JobNest.</li>

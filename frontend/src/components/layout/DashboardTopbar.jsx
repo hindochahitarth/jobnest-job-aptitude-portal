@@ -28,7 +28,8 @@ export default function DashboardTopbar({ title, subtitle }) {
   return (
     <div className="dashboard-topbar">
       <div className="topbar-left">
-       
+        {title && <span className="topbar-title">{title}</span>}
+        {subtitle && <span className="topbar-subtitle">{subtitle}</span>}
       </div>
 
       <div className="topbar-right">

@@ -79,7 +79,7 @@ export default function Results() {
   return (
     <div className="dashboard-grid two-col">
       <div className="main-col">
-        <Card title="Your Test Scorecards & Certificates" icon="%">
+        <Card title="Your Test Scorecards & Certificates" icon="📊">
           <p style={{ color: "var(--text-muted)", fontSize: 14, marginBottom: 16 }}>Saved aptitude attempts appear here with downloadable JobNest result forms.</p>
           {errorMessage && <div className="alert warning" style={{ marginBottom: 14 }}>{errorMessage}</div>}
           {loading ? <p style={{ color: "var(--text-subtle)", fontSize: 13 }}>Loading scorecards...</p> : null}
@@ -103,7 +103,7 @@ export default function Results() {
       </div>
 
       <div className="side-col">
-        <Card title="Recruiter Badge Status" icon="ID">
+        <Card title="Recruiter Badge Status" icon="🏅">
           <div style={{ padding: 12, background: "var(--primary-light)", borderRadius: "var(--radius-sm)", border: "1px solid var(--primary-soft)" }}>
             <span style={{ fontSize: 14, fontWeight: 700, color: "var(--primary)" }}>{results.length ? `${getPerformanceLevel(bestScore)} Aptitude Badge` : "No Badge Yet"}</span>
             <p style={{ fontSize: 13, color: "var(--text-main)", marginTop: 6, lineHeight: 1.5 }}>{results.length ? `Best score: ${bestScore}%. Downloadable certificates are available from each saved attempt.` : "Complete an aptitude test to unlock verified scorecards."}</p>

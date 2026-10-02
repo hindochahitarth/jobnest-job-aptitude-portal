@@ -311,7 +311,7 @@ export default function Overview() {
           </Card>
 
           <Card title="Hiring Companies" icon="🏢">
-            <ul style={{ listStyle: "none", display: "flex", flexDirection: "column", gap: 10, fontSize: 13 }}>
+            <ul style={{ listStyle: "none", margin: 0, padding: 0, display: "flex", flexDirection: "column", gap: 10, fontSize: 13 }}>
               <li style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                 <span>Acme Corp</span>
                 <span className="badge-v2 primary">12 Openings</span>
