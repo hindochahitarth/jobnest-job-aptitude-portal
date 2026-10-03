@@ -29,7 +29,11 @@ export default function Sidebar({ collapsed, onToggle, items = [] }) {
 
       <nav className="sidebar-nav">
         {items.map((item) => {
-          const isActive = currentPath === item.href || (currentPath === "/dashboard" && item.href === "/dashboard");
+          // Compare full pathname against item.href (which uses full paths like /dashboard/profile)
+          // Special case: /dashboard root matches the overview item
+          const isActive =
+            currentPath === item.href ||
+            (item.href !== "/dashboard" && currentPath.startsWith(item.href));
           return (
             <a
               key={item.key}

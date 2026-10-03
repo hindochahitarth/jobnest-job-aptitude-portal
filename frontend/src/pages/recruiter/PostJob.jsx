@@ -113,6 +113,19 @@ export default function PostJob() {
               </div>
 
               <div className="input-group">
+                <label>Experience Level *</label>
+                <select className="input-field" name="expLevel" value={form.expLevel} onChange={handleChange}>
+                  <option value="0-1">0–1 years (Fresher)</option>
+                  <option value="0-2">0–2 years (Entry Level)</option>
+                  <option value="2-5">2–5 years (Mid Level)</option>
+                  <option value="5-10">5–10 years (Senior)</option>
+                  <option value="10+">10+ years (Lead / Principal)</option>
+                </select>
+              </div>
+            </div>
+
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+              <div className="input-group">
                 <label>Minimum Aptitude Cutoff Score (%)</label>
                 <select className="input-field" name="aptitudeCutoff" value={form.aptitudeCutoff} onChange={handleChange}>
                   <option value="70">&gt; 70% Cutoff</option>
@@ -120,6 +133,18 @@ export default function PostJob() {
                   <option value="85">&gt; 85% Cutoff (High Priority)</option>
                   <option value="90">&gt; 90% Cutoff (Elite)</option>
                 </select>
+              </div>
+
+              <div className="input-group">
+                <label>Application Deadline *</label>
+                <input
+                  type="date"
+                  className="input-field"
+                  name="deadline"
+                  value={form.deadline}
+                  onChange={handleChange}
+                  required
+                />
               </div>
             </div>
 
@@ -135,17 +160,6 @@ export default function PostJob() {
               />
             </div>
 
-            <div className="input-group">
-              <label>Application Deadline *</label>
-              <input
-                type="date"
-                className="input-field"
-                name="deadline"
-                value={form.deadline}
-                onChange={handleChange}
-                required
-              />
-            </div>
 
             <div className="input-group">
               <label>Job Description</label>

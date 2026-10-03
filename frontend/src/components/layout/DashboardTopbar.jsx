@@ -35,7 +35,7 @@ export default function DashboardTopbar({ title, subtitle }) {
       <div className="topbar-right">
        
         <div className="user-profile-badge" onClick={() => {
-          const target = user?.role === "RECRUITER" ? "/dashboard/post-job" : "/dashboard/profile";
+          const target = user?.role === "RECRUITER" ? "/dashboard" : "/dashboard/profile";
           window.history.pushState({}, "", target);
           window.dispatchEvent(new PopStateEvent("popstate"));
         }}>
